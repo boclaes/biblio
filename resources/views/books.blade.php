@@ -84,6 +84,9 @@
         </div>
     @endforeach
     </div>
+    <div class="navigation-buttons">
+        <a href="{{ route('book.recommend') }}" class="recommendation-button">Get Book Recommendations</a>
+    </div>
     <a href="{{ route('home') }}"><button type="button">Back</button></a>
 
     <script src="{{ asset('js/sorting.js') }}"></script>

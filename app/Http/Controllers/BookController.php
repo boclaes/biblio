@@ -7,6 +7,8 @@ use App\Helpers\BookHelper;
 use App\Models\Book;
 use App\Models\User;
 use App\Models\Reviews;
+use App\Models\RejectedBook;
+use App\Models\AcceptedBook;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
@@ -166,5 +168,111 @@ class BookController extends Controller
         return response()->json(['message' => 'Status updated successfully', 'book' => $book], 200);
     }
     
+    public function recommendBook()
+    {
+        $user = Auth::user();
+        $favoriteGenres = $user->books()
+                                ->selectRaw('genre, COUNT(*) as count')
+                                ->groupBy('genre')
+                                ->orderBy('count', 'DESC')
+                                ->take(3)  // consider the top 3 genres
+                                ->pluck('genre');
+
+        if ($favoriteGenres->isEmpty()) {
+            return redirect()->route('home')->with('error', 'No favorite genres found. Add some books to get recommendations!');
+        }
+
+        $book = $this->bookHelper->getRecommendation($favoriteGenres->toArray());
+
+        if (!$book) {
+            return redirect()->route('home')->with('error', 'No recommendations found for your favorite genres.');
+        }
+
+        return view('recommendation', compact('book'));
+    }
+
+    public function handleDecision(Request $request) {
+        try {
+            $decision = $request->input('decision');
+            $bookDetails = $request->only(['google_books_id', 'title', 'author', 'year', 'description', 'cover', 'genre', 'pages']);
+            $user = Auth::user();
+    
+            if ($decision === 'reject') {
+                $this->rejectBook($user->id, $bookDetails['google_books_id']);
+            } elseif ($decision === 'accept') {
+                $this->acceptBook($user->id, $bookDetails);
+            }
+    
+            $newBook = $this->getNewRecommendation($user->id);
+            return response()->json([
+                'success' => true,
+                'newBook' => $newBook
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error handling decision: " . $e->getMessage());
+            return response()->json(['error' => 'Internal Server Error'], 500);
+        }
+    }
+    
+      
+    
+    public function rejectBook($userId, $googleBooksId)
+    {
+        Log::info('Rejecting book with Google Books ID: ' . $googleBooksId); // Check the log for this output
+    
+        if (empty($googleBooksId)) {
+            return response()->json(['error' => 'Google Books ID is required'], 400);
+        }
+    
+        // Add to rejected books
+        RejectedBook::create([
+            'user_id' => $userId,
+            'google_books_id' => $googleBooksId
+        ]);
+    
+        // Fetch a new recommendation
+        $newRecommendation = $this->getNewRecommendation($userId);
+    
+        return response()->json([
+            'newBook' => $newRecommendation
+        ]);
+    }
+    
+    protected function getNewRecommendation($userId)
+    {
+        // Fetch Google Books IDs of rejected books from the 'rejected_books' table
+        $rejectedBooksIds = RejectedBook::where('user_id', $userId)->pluck('google_books_id')->toArray();
+        
+        // Fetch Google Books IDs of accepted books from the 'accepted_books' table
+        $acceptedBooksIds = AcceptedBook::where('user_id', $userId)->pluck('google_books_id')->toArray();
+        
+        // Combine both lists to form a comprehensive exclusion list
+        $excludedIds = array_unique(array_merge($rejectedBooksIds, $acceptedBooksIds));
+        
+        // Fetch a new book recommendation while excluding these Google Books IDs
+        $newBook = $this->bookHelper->getRecommendation([], $excludedIds);
+        
+        return $newBook;
+    }
+    
+    
+    public function acceptBook($userId, $bookDetails)
+    {
+        Log::info('Accepting book with Google Books ID: ' . $bookDetails['google_books_id']);
+        
+        // Add to accepted books
+        AcceptedBook::create([
+            'user_id' => $userId,
+            'google_books_id' => $bookDetails['google_books_id'],
+            'title' => $bookDetails['title'],
+            'author' => $bookDetails['author'],
+            'year' => $bookDetails['year'],
+            'description' => $bookDetails['description'],
+            'cover' => $bookDetails['cover'],
+            'genre' => $bookDetails['genre'],
+            'pages' => $bookDetails['pages']
+        ]);
+    }
+
 
 }

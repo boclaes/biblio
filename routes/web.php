@@ -17,7 +17,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/books/{id}/rate', [BookController::class, 'rateBook'])->name('books.rate');
     Route::get('/books/{id}/rating', [BookController::class, 'getBookRating'])->name('books.rating');
     Route::post('/books/{id}/update-status', [BookController::class, 'updateStatus'])->name('books.updateStatus');
-
+    Route::get('/recommend', [BookController::class, 'recommendBook'])->name('book.recommend');
+    Route::post('/book/decision', [BookController::class, 'handleDecision'])->name('book.decision');
+    Route::post('/book/reject', [BookController::class, 'rejectBook'])->name('book.reject');
 });
 
 Route::get('/', function (Request $request) {
@@ -32,8 +34,3 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-
-
-
-
-
