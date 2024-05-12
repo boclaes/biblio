@@ -5,6 +5,7 @@ namespace App\Helpers;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use App\Models\Book;
+use Illuminate\Support\Facades\Log;
 
 class BookHelper
 {
@@ -33,40 +34,72 @@ class BookHelper
         }
     }
     
-    
-    public function getRecommendation(array $genres, $excludedIds = [])
+    public function getRecommendation(array $genres, $exclusionList)
     {
-        $genreQuery = implode("|", $genres);  // Prepare the query for multiple genres
-        $exclusionQuery = count($excludedIds) ? '-id:' . implode(' -id:', $excludedIds) : ''; // Exclude books by ID
+        $genreQuery = implode("|", $genres);
+        $query = "subject:{$genreQuery}&maxResults=40&orderBy=relevance";  // Increased maxResults and set orderBy to relevance
     
-        try {
-            $response = Http::get("https://www.googleapis.com/books/v1/volumes?q=subject:{$genreQuery}{$exclusionQuery}&maxResults=10&orderBy=newest");
+        Log::info("Query to Google Books API: " . $query);
+        $response = Http::get("https://www.googleapis.com/books/v1/volumes?q={$query}");
     
-            if ($response->successful()) {
-                $books = $response->json('items');
+        if ($response->successful()) {
+            $books = $response->json('items');
+            if (!empty($books)) {
+                $books = array_filter($books, function ($book) use ($exclusionList) {
+                    $info = $book['volumeInfo'];
+                    $title = $info['title'] ?? '';
+                    $authors = implode(", ", $info['authors'] ?? []);
+                    $publishedDate = substr($info['publishedDate'] ?? '', 0, 4);
+    
+                    foreach ($exclusionList as $excluded) {
+                        if ($title === $excluded['title'] && $authors === $excluded['author'] && $publishedDate === $excluded['year']) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+    
                 if (!empty($books)) {
-                    // Randomly pick one book from the list
-                    $bookInfo = $books[array_rand($books)]['volumeInfo'];
-                    $googleBookId = $books[array_rand($books)]['id']; // Get the Google Books ID
+                    // Calculate weights based on ratings count
+                    $totalRatings = array_sum(array_map(function ($book) {
+                        return $book['volumeInfo']['ratingsCount'] ?? 0;
+                    }, $books));
+    
+                    // If there are no ratings, fallback to random selection
+                    if ($totalRatings > 0) {
+                        $weightedBooks = [];
+                        foreach ($books as $book) {
+                            $count = $book['volumeInfo']['ratingsCount'] ?? 0;
+                            $weight = $count / $totalRatings;
+                            for ($i = 0; $i < $weight * 100; $i++) {
+                                $weightedBooks[] = $book;
+                            }
+                        }
+                        $selectedBook = $weightedBooks[array_rand($weightedBooks)];
+                    } else {
+                        $selectedBook = $books[array_rand($books)];
+                    }
+    
+                    $bookInfo = $selectedBook['volumeInfo'];
+                    $googleBookId = $selectedBook['id'];
     
                     return [
                         'id' => $googleBookId,
                         'title' => $bookInfo['title'],
                         'author' => implode(", ", $bookInfo['authors'] ?? []),
-                        'year' => $bookInfo['publishedDate'] ?? null,
+                        'year' => substr($bookInfo['publishedDate'] ?? '', 0, 4),
                         'description' => $bookInfo['description'] ?? 'Description not available',
                         'cover' => $bookInfo['imageLinks']['thumbnail'] ?? null,
                         'genre' => implode(", ", $bookInfo['categories'] ?? []),
-                        'pages' => $bookInfo['pageCount'] ?? 'Page count not available',
+                        'pages' => isset($bookInfo['pageCount']) && $bookInfo['pageCount'] > 0 ? $bookInfo['pageCount'] : 'Page count not available',
                     ];
                 }
             }
-            return null;
-        } catch (Exception $e) {
-            return null;
         }
-    }
-    
+        Log::error("Failed to fetch recommendations or no books found.");
+        return null;
+    }    
+
     
     public function saveToDatabase($bookDetails)
     {

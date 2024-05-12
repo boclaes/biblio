@@ -12,6 +12,9 @@ class CreateRejectedBooksTable extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('google_books_id');
+            $table->string('title');
+            $table->string('author');
+            $table->string('year', 100);
             $table->timestamps();
         });
     }

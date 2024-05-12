@@ -18,7 +18,8 @@ class AcceptedBook extends Model
         'description', 
         'cover', 
         'genre', 
-        'pages'
+        'pages',
+        'purchase_link' 
     ];
 
     public function user() {

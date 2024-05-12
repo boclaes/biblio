@@ -46,3 +46,5 @@
     <script src="{{ asset('js/recommendationHandler.js') }}"></script>
 </body>
 </html>
+
+

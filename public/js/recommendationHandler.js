@@ -26,8 +26,6 @@ function handleDecision(decision, googleBooksId) {
 }
 
 
-
-
 function updateBookRecommendation(book) {
     if(book) {
         document.querySelector('#book-recommendation').dataset.book = JSON.stringify(book);

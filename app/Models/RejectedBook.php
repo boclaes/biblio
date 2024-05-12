@@ -9,7 +9,13 @@ class RejectedBook extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'google_books_id'];
+    protected $fillable = [
+        'user_id', 
+        'google_books_id', 
+        'title', 
+        'author', 
+        'year'
+    ];
 
     public function user() {
         return $this->belongsTo(User::class);

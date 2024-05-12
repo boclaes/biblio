@@ -20,6 +20,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/recommend', [BookController::class, 'recommendBook'])->name('book.recommend');
     Route::post('/book/decision', [BookController::class, 'handleDecision'])->name('book.decision');
     Route::post('/book/reject', [BookController::class, 'rejectBook'])->name('book.reject');
+    Route::get('/accepted-books', [BookController::class, 'showAcceptedBooks'])->name('accepted.books');
+    Route::delete('/accepted-books/{id}', [BookController::class, 'deleteAcceptedBook'])->name('delete.accepted.book');
+    Route::get('/fetch-books', 'BookController@recommendBook')->name('fetch-books');
 });
 
 Route::get('/', function (Request $request) {
