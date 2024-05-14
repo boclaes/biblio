@@ -9,35 +9,82 @@ use Illuminate\Support\Facades\Log;
 
 class BookHelper
 {
-    public function getBookDetails($isbn)
+    public function getBookDetailsByISBN($isbn)
     {
-        try {
-            $response = Http::get("https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn");
+        $response = Http::get("https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn");
     
-            if ($response->successful()) {
-                $bookInfo = $response->json('items.0.volumeInfo');
+        if ($response->successful()) {
+            $bookInfo = $response->json('items.0.volumeInfo');
     
-                return [
-                    'title' => $bookInfo['title'],
-                    'author' => implode(", ", $bookInfo['authors'] ?? []),
-                    'year' => $bookInfo['publishedDate'] ?? null,
-                    'description' => $bookInfo['description'] ?? 'Description not available',
-                    'cover' => $bookInfo['imageLinks']['thumbnail'] ?? null,
-                    'genre' => implode(", ", $bookInfo['categories'] ?? []),
-                    'pages' => isset($bookInfo['pageCount']) && $bookInfo['pageCount'] > 0 ? $bookInfo['pageCount'] : 'Page count not available',
-                ];
-            } else {
-                return null;
-            }
-        } catch (Exception $e) {
-            return null;
+            return [
+                'title' => $bookInfo['title'],
+                'author' => implode(", ", $bookInfo['authors'] ?? []),
+                'year' => $bookInfo['publishedDate'] ?? null,
+                'description' => $bookInfo['description'] ?? 'Description not available',
+                'cover' => $bookInfo['imageLinks']['thumbnail'] ?? null,
+                'genre' => implode(", ", $bookInfo['categories'] ?? []),
+                'pages' => isset($bookInfo['pageCount']) && $bookInfo['pageCount'] > 0 ? $bookInfo['pageCount'] : 'Page count not available',
+            ];
         }
+        return null;
+    }
+    
+    public function searchBooksByTitle($title)
+    {
+        $response = Http::get("https://www.googleapis.com/books/v1/volumes?q=" . urlencode($title));
+    
+        if ($response->successful()) {
+            return $response->json()['items'] ?? [];
+        }
+        return null;
+    }  
+    
+    private function selectRelevantGenre($genres) {
+        $preferredGenres = [
+            'Fantasy', 'Science Fiction', 'Mystery', 'Thriller', 'Romance',
+            'Young Adult (YA) Fiction', 'Historical Fiction', 'Horror',
+            'Literary Fiction', 'Adventure', 'Non-Fiction', 'Biography',
+            'Memoir', 'Self-Help', 'Health & Wellness', 'Children’s Literature',
+            'Crime', 'Graphic Novel', 'Paranormal', 'Classics'
+        ];
+    
+        foreach ($preferredGenres as $preferredGenre) {
+            if (in_array($preferredGenre, $genres)) {
+                return $preferredGenre; // Return the first matching preferred genre
+            }
+        }
+        return $genres[0] ?? 'General';  // Default to the first available genre or 'General' if none match
+    }
+    
+    
+
+    public function getBookDetailsById($bookId)
+    {
+        $response = Http::get("https://www.googleapis.com/books/v1/volumes/{$bookId}");
+    
+        if ($response->successful()) {
+            $bookInfo = $response->json('volumeInfo');
+    
+            // Use the selectRelevantGenre function to choose the most appropriate genre
+            $genre = $this->selectRelevantGenre($bookInfo['categories'] ?? []);
+    
+            return [
+                'title' => $bookInfo['title'],
+                'author' => implode(", ", $bookInfo['authors'] ?? []),
+                'year' => $bookInfo['publishedDate'] ?? null,
+                'description' => $bookInfo['description'] ?? 'Description not available',
+                'cover' => $bookInfo['imageLinks']['thumbnail'] ?? null,
+                'genre' => $genre,  // Now using selectRelevantGenre to determine the best genre
+                'pages' => isset($bookInfo['pageCount']) && $bookInfo['pageCount'] > 0 ? $bookInfo['pageCount'] : 'Page count not available',
+            ];
+        }
+        return null; // Return null if the response is not successful
     }
     
     public function getRecommendation(array $genres, $exclusionList)
     {
-        $genreQuery = implode("|", $genres);
-        $query = "subject:{$genreQuery}&maxResults=40&orderBy=relevance";  // Increased maxResults and set orderBy to relevance
+        $genreQuery = implode("|", array_map('urlencode', $genres)); // Ensure genres are URL-encoded properly
+        $query = "subject:{$genreQuery}&maxResults=40&orderBy=relevance";        
     
         Log::info("Query to Google Books API: " . $query);
         $response = Http::get("https://www.googleapis.com/books/v1/volumes?q={$query}");

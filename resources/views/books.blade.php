@@ -57,11 +57,22 @@
             $rating = $book->reviews->avg('rating');
             $rating = $rating ? $rating : 0;
             $numStars = round($rating);
+            $status = '';
+            if ($book->want_to_read) {
+                $status = 'Want to Read';
+            } elseif ($book->reading) {
+                $status = 'Reading';
+            } elseif ($book->done_reading) {
+                $status = 'Done Reading';
+            }
         @endphp
         <div class="book-card">
             <h3>{{ $book->title }}</h3>
             <p class="author">By: {{ $book->author }}</p>
             <p class="pages">Pages: {{$book->pages}}</p>
+            @if ($status)
+                <p class="status">{{ $status }}</p>
+            @endif
             <div class="stars" data-rating="{{ $numStars }}">
                 @for ($i = 1; $i <= $numStars; $i++)
                     <span class="star">&#9733;</span>
@@ -76,6 +87,7 @@
                 <p>No Cover Image</p>
             @endif
             <a href="{{ route('details.book', $book->id) }}">Details</a>
+            <a href="{{ route('edit.book', $book->id) }}">Edit Book</a> <!-- New Edit Book button -->
             <form action="{{ route('delete.book', $book->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this book?');">
                 @csrf
                 @method('DELETE')
@@ -90,7 +102,7 @@
     <div class="navigation-buttons">
         <a href="{{ route('accepted.books') }}" class="recommendation-button">wishlist</a>
     </div>
-    <a href="{{ route('home') }}"><button type="button">Back</button></a>
+    <a href="{{ route('home') }}"><button type="button">Search books</button></a>
 
     <script src="{{ asset('js/sorting.js') }}"></script>
 </body>

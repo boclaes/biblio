@@ -51,6 +51,7 @@
         <div class="book-card">
             <h3>{{ $book->title }}</h3>
             <p><strong>Author(s):</strong> {{ $book->author }}</p>
+            <p><strong>Pages:</strong> {{ $book->pages }}</p>
             <p><strong>Year:</strong> {{ $book->year }}</p>
             <p><strong>Description:</strong> {{ $book->description }}</p>
             @if ($book->cover)
@@ -66,6 +67,12 @@
             </span>
             <br><br>
             <a href="{{ route('edit.notes', $book->id) }}"><button>Edit Notes</button></a>
+            <p><strong>Your Review:</strong></p>
+            <span class="description-field">
+                {{ $book->review ? $book->review : 'No custom review' }}
+            </span>
+            <br><br>
+            <a href="{{ route('edit.review', $book->id) }}"><button>Edit review</button></a>
             <div>
                 <input type="checkbox" id="want_to_read" {{ $book->want_to_read ? 'checked' : '' }}>
                 <label for="want_to_read">Want to Read</label>

@@ -8,12 +8,17 @@ use App\Http\Controllers\BookController;
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/home', [BookController::class, 'home'])->name('home');
-    Route::post('/scan', [BookController::class, 'scan'])->name('scan');
+    Route::post('/search', [BookController::class, 'search'])->name('search');
+    Route::post('/add-book', [BookController::class, 'addBook'])->name('addBook');
     Route::get('/books', [BookController::class, 'list'])->name('books');
     Route::get('/books/{id}/details', [BookController::class, 'showDetails'])->name('details.book');
     Route::delete('/book/{id}', [BookController::class, 'delete'])->name('delete.book');
     Route::post('/books/{id}/save-notes', [BookController::class, 'saveNotes'])->name('save.notes');
     Route::get('/books/{id}/edit-notes', [BookController::class, 'editNotes'])->name('edit.notes');
+    Route::post('/books/{id}/save-review', [BookController::class, 'saveReview'])->name('save.review');
+    Route::get('/books/{id}/edit-review', [BookController::class, 'editReview'])->name('edit.review');
+    Route::get('/books/{id}/edit', [BookController::class, 'editBook'])->name('edit.book'); 
+    Route::put('/books/{id}', [BookController::class, 'updateBook'])->name('update.book');
     Route::post('/books/{id}/rate', [BookController::class, 'rateBook'])->name('books.rate');
     Route::get('/books/{id}/rating', [BookController::class, 'getBookRating'])->name('books.rating');
     Route::post('/books/{id}/update-status', [BookController::class, 'updateStatus'])->name('books.updateStatus');

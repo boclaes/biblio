@@ -18,6 +18,7 @@ class Book extends Model
         'genre',
         'pages',
         'notes_user',
+        'review',
         'want_to_read',
         'reading',
         'done_reading',

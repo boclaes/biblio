@@ -6,7 +6,7 @@
     <title>Edit Notes</title>
 </head>
 <body>
-    <h2>Edit Notes</h2>
+    <h1>Edit Notes for {{ $book->title }}</h1>
     <form method="POST" action="{{ route('save.notes', $book->id) }}">
         @csrf
         <label for="notes">Notes:</label><br>
