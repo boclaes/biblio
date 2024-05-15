@@ -4,42 +4,47 @@ namespace App\Helpers;
 
 use Exception;
 use Illuminate\Support\Facades\Http;
-use App\Models\Book;
 use Illuminate\Support\Facades\Log;
+use App\Models\Book;
 
 class BookHelper
 {
-    public function getBookDetailsByISBN($isbn)
+    private function cleanDescription($description)
     {
-        $response = Http::get("https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn");
-    
-        if ($response->successful()) {
-            $bookInfo = $response->json('items.0.volumeInfo');
-    
-            return [
-                'title' => $bookInfo['title'],
-                'author' => implode(", ", $bookInfo['authors'] ?? []),
-                'year' => $bookInfo['publishedDate'] ?? null,
-                'description' => $bookInfo['description'] ?? 'Description not available',
-                'cover' => $bookInfo['imageLinks']['thumbnail'] ?? null,
-                'genre' => implode(", ", $bookInfo['categories'] ?? []),
-                'pages' => isset($bookInfo['pageCount']) && $bookInfo['pageCount'] > 0 ? $bookInfo['pageCount'] : 'Page count not available',
-            ];
+        $description = strip_tags($description);
+        $description = preg_replace('/\s+/', ' ', $description);
+        $maxLength = 1000; // Adjust the length as needed
+
+        if (strlen($description) > $maxLength) {
+            $truncated = substr($description, 0, $maxLength);
+
+            // Find the last occurrence of sentence-ending punctuation within the truncated string
+            $lastPunctuation = max(
+                strrpos($truncated, '.'),
+                strrpos($truncated, '!'),
+                strrpos($truncated, '?')
+            );
+
+            // If a complete sentence end is found within the truncated string, truncate at that point
+            if ($lastPunctuation !== false && $lastPunctuation >= $maxLength - 50) {
+                $description = substr($truncated, 0, $lastPunctuation + 1) . '...';
+            } else {
+                // Otherwise, find the last space to avoid cutting a word in half
+                $lastSpace = strrpos($truncated, ' ');
+                if ($lastSpace !== false && $lastSpace >= $maxLength - 50) {
+                    $description = substr($truncated, 0, $lastSpace) . '...';
+                } else {
+                    // Fallback to the original truncation if no space is found
+                    $description = rtrim($truncated) . '...';
+                }
+            }
         }
-        return null;
+
+        return $description;
     }
-    
-    public function searchBooksByTitle($title)
+
+    private function selectRelevantGenre($genres)
     {
-        $response = Http::get("https://www.googleapis.com/books/v1/volumes?q=" . urlencode($title));
-    
-        if ($response->successful()) {
-            return $response->json()['items'] ?? [];
-        }
-        return null;
-    }  
-    
-    private function selectRelevantGenre($genres) {
         $preferredGenres = [
             'Fantasy', 'Science Fiction', 'Mystery', 'Thriller', 'Romance',
             'Young Adult (YA) Fiction', 'Historical Fiction', 'Horror',
@@ -48,44 +53,128 @@ class BookHelper
             'Crime', 'Graphic Novel', 'Paranormal', 'Classics'
         ];
     
+        // Ensure $genres is an array
+        if (is_string($genres)) {
+            $genres = explode(' / ', $genres);
+        }
+    
+        // Remove any genre containing "&"
+        $genres = array_filter($genres, function($genre) {
+            if (strpos($genre, '&') !== false) {
+                Log::info('Genre contains "&": ' . $genre . '. Removing from the list.');
+                return false;
+            }
+            return true;
+        });
+    
+        // Log the genres input for debugging
+        Log::info('Genres input after removing "&": ', $genres);
+    
         foreach ($preferredGenres as $preferredGenre) {
             if (in_array($preferredGenre, $genres)) {
+                // Log the selected genre
+                Log::info('Selected genre: ' . $preferredGenre);
                 return $preferredGenre; // Return the first matching preferred genre
             }
         }
-        return $genres[0] ?? 'General';  // Default to the first available genre or 'General' if none match
+    
+        // Log the fallback genre
+        Log::info('Fallback genre: ' . ($genres[0] ?? 'Fiction'));
+        return $genres[0] ?? 'Fiction'; // Default to the first available genre or 'Fiction' if none match
+    }    
+
+    private function getGoogleImage($title)
+    {
+        // Explicitly load environment variables
+        $apiKey = config('GOOGLE_CSE_API_KEY', env('GOOGLE_CSE_API_KEY'));
+        $cx = config('GOOGLE_CSE_CX', env('GOOGLE_CSE_CX'));
+        
+        // Add logging for debugging
+        Log::info("Google CSE API Key: " . $apiKey);
+        Log::info("Google CSE CX: " . $cx);
+    
+        if (empty($apiKey) || empty($cx)) {
+            Log::error("API key or CX is not set in the environment variables.");
+            return asset('images/default_cover.jpg');
+        }
+    
+        $query = urlencode($title . ' book cover');
+        $url = "https://www.googleapis.com/customsearch/v1?q={$query}&cx={$cx}&key={$apiKey}&searchType=image&num=1";
+    
+        Log::info("Fetching Google Image with URL: {$url}");
+    
+        $response = Http::get($url);
+        if ($response->successful()) {
+            $data = $response->json();
+            Log::info("Google Image Search Response: ", $data);
+    
+            if (!empty($data['items'][0]['link'])) {
+                return $data['items'][0]['link'];
+            }
+        } else {
+            Log::error("Failed to fetch Google Image: " . $response->body());
+        }
+    
+        return asset('images/default_cover.jpg'); // Fallback to default image
+    }    
+
+    private function formatBookDetails($bookInfo)
+    {
+        if (!isset($bookInfo['title'])) {
+            Log::error("Title not found in book information");
+            return [
+                'error' => 'Title not found in book information'
+            ];
+        }
+    
+        $title = $bookInfo['title'];
+        $cover = $bookInfo['imageLinks']['thumbnail'] ?? $this->getGoogleImage($title);
+        Log::info("Selected Cover Image for '{$title}': {$cover}");
+    
+        return [
+            'title' => $title,
+            'author' => implode(", ", $bookInfo['authors'] ?? []),
+            'year' => $bookInfo['publishedDate'] ?? null,
+            'description' => $this->cleanDescription($bookInfo['description'] ?? 'Description not available'),
+            'cover' => $cover,
+            'genre' => $this->selectRelevantGenre($bookInfo['categories'] ?? []),
+            'pages' => isset($bookInfo['pageCount']) && $bookInfo['pageCount'] > 0 ? $bookInfo['pageCount'] : 0,
+        ];
+    }          
+
+    public function getBookDetailsByISBN($isbn)
+    {
+        $response = Http::get("https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn");
+        if ($response->successful()) {
+            $bookInfo = $response->json('items.0.volumeInfo');
+            return $this->formatBookDetails($bookInfo);
+        }
+        return null;
     }
-    
-    
+
+    public function searchBooksByTitle($title)
+    {
+        $response = Http::get("https://www.googleapis.com/books/v1/volumes?q=" . urlencode($title));
+        if ($response->successful()) {
+            return $response->json()['items'] ?? [];
+        }
+        return null;
+    }
 
     public function getBookDetailsById($bookId)
     {
         $response = Http::get("https://www.googleapis.com/books/v1/volumes/{$bookId}");
-    
         if ($response->successful()) {
             $bookInfo = $response->json('volumeInfo');
-    
-            // Use the selectRelevantGenre function to choose the most appropriate genre
-            $genre = $this->selectRelevantGenre($bookInfo['categories'] ?? []);
-    
-            return [
-                'title' => $bookInfo['title'],
-                'author' => implode(", ", $bookInfo['authors'] ?? []),
-                'year' => $bookInfo['publishedDate'] ?? null,
-                'description' => $bookInfo['description'] ?? 'Description not available',
-                'cover' => $bookInfo['imageLinks']['thumbnail'] ?? null,
-                'genre' => $genre,  // Now using selectRelevantGenre to determine the best genre
-                'pages' => isset($bookInfo['pageCount']) && $bookInfo['pageCount'] > 0 ? $bookInfo['pageCount'] : 'Page count not available',
-            ];
+            return $this->formatBookDetails($bookInfo);
         }
-        return null; // Return null if the response is not successful
+        return null;
     }
-    
+
     public function getRecommendation(array $genres, $exclusionList)
     {
         $genreQuery = implode("|", array_map('urlencode', $genres)); // Ensure genres are URL-encoded properly
-        $query = "subject:{$genreQuery}&maxResults=40&orderBy=relevance";        
-    
+        $query = "subject:{$genreQuery}&maxResults=40&orderBy=relevance";
         Log::info("Query to Google Books API: " . $query);
         $response = Http::get("https://www.googleapis.com/books/v1/volumes?q={$query}");
     
@@ -97,28 +186,34 @@ class BookHelper
                     $title = $info['title'] ?? '';
                     $authors = implode(", ", $info['authors'] ?? []);
                     $publishedDate = substr($info['publishedDate'] ?? '', 0, 4);
+                    $description = $info['description'] ?? null;
     
+                    // Check if the book has an author and description
+                    if (empty($authors) || empty($description)) {
+                        return false;
+                    }
+    
+                    // Check if the book is in the exclusion list
                     foreach ($exclusionList as $excluded) {
                         if ($title === $excluded['title'] && $authors === $excluded['author'] && $publishedDate === $excluded['year']) {
                             return false;
                         }
                     }
+    
                     return true;
                 });
     
                 if (!empty($books)) {
-                    // Calculate weights based on ratings count
                     $totalRatings = array_sum(array_map(function ($book) {
                         return $book['volumeInfo']['ratingsCount'] ?? 0;
                     }, $books));
     
-                    // If there are no ratings, fallback to random selection
                     if ($totalRatings > 0) {
                         $weightedBooks = [];
                         foreach ($books as $book) {
                             $count = $book['volumeInfo']['ratingsCount'] ?? 0;
                             $weight = $count / $totalRatings;
-                            for ($i = 0; $i < $weight * 100; $i++) {
+                            for ($i = 0; $i < $weight * 100; ++$i) {
                                 $weightedBooks[] = $book;
                             }
                         }
@@ -130,16 +225,7 @@ class BookHelper
                     $bookInfo = $selectedBook['volumeInfo'];
                     $googleBookId = $selectedBook['id'];
     
-                    return [
-                        'id' => $googleBookId,
-                        'title' => $bookInfo['title'],
-                        'author' => implode(", ", $bookInfo['authors'] ?? []),
-                        'year' => substr($bookInfo['publishedDate'] ?? '', 0, 4),
-                        'description' => $bookInfo['description'] ?? 'Description not available',
-                        'cover' => $bookInfo['imageLinks']['thumbnail'] ?? null,
-                        'genre' => implode(", ", $bookInfo['categories'] ?? []),
-                        'pages' => isset($bookInfo['pageCount']) && $bookInfo['pageCount'] > 0 ? $bookInfo['pageCount'] : 'Page count not available',
-                    ];
+                    return $this->formatBookDetails($bookInfo) + ['id' => $googleBookId];
                 }
             }
         }
@@ -147,7 +233,6 @@ class BookHelper
         return null;
     }    
 
-    
     public function saveToDatabase($bookDetails)
     {
         try {

@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookContainer = document.getElementById('bookContainer');
     const books = Array.from(bookContainer.children);
     const searchInput = document.getElementById('search');
+    let activeLetter = null;
 
     // Initial sorting by book title
     books.sort((a, b) => a.querySelector('h3').textContent.localeCompare(b.querySelector('h3').textContent));
@@ -60,6 +61,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         books.forEach(book => bookContainer.appendChild(book));
+    });
+
+    // Event listener for alphabetical filter
+    document.querySelectorAll('.alphabet-filter a').forEach(link => {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            const letter = this.dataset.letter.toLowerCase();
+
+            if (activeLetter === letter) {
+                // Deselect the current letter and show all books
+                activeLetter = null;
+                document.querySelectorAll('.alphabet-filter a').forEach(a => a.classList.remove('active'));
+                books.forEach(book => book.style.display = 'block');
+            } else {
+                // Select a new letter
+                activeLetter = letter;
+                document.querySelectorAll('.alphabet-filter a').forEach(a => a.classList.remove('active'));
+                this.classList.add('active');
+
+                books.forEach(book => {
+                    const title = book.querySelector('h3').textContent.toLowerCase();
+                    if (letter === 'all' || title.startsWith(letter)) {
+                        book.style.display = 'block';
+                    } else {
+                        book.style.display = 'none';
+                    }
+                });
+            }
+        });
     });
 
     function sortPages(pagesA, pagesB) {

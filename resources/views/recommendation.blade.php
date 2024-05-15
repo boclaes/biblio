@@ -33,7 +33,10 @@
 <body>
     <div id="book-recommendation" data-book='@json($book)' data-google-books-id="{{ $book['id'] }}">
         @if($book)
-            <img src="{{ $book['cover'] }}" alt="Cover Image">
+            @php
+                $cover = $book['cover'] ?? asset('images/default_cover.jpg');
+            @endphp
+            <img src="{{ $cover }}" alt="Cover Image">
             <h2>{{ $book['title'] }}</h2>
             <p>{{ $book['description'] }}</p>
             <button onclick="handleDecision('accept', '{{ $book['id'] }}')">Accept</button>
@@ -46,5 +49,3 @@
     <script src="{{ asset('js/recommendationHandler.js') }}"></script>
 </body>
 </html>
-
-

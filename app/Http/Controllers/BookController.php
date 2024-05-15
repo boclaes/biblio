@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Helpers\BookHelper;
 use App\Models\Book;
-use App\Models\User;
 use App\Models\Reviews;
 use App\Models\RejectedBook;
 use App\Models\AcceptedBook;
@@ -308,7 +307,7 @@ class BookController extends Controller
         }
     
         return view('recommendation', compact('book'));
-    }
+    }    
       
     public function handleDecision(Request $request) {
         try {
@@ -385,7 +384,7 @@ class BookController extends Controller
     
         Log::info("Exclusion List: ", $exclusionList);
         return $exclusionList;
-    }
+    }    
     
     
     public function acceptBook($userId, $bookDetails)

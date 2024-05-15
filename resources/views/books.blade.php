@@ -33,6 +33,21 @@
             right: 20px;
             z-index: 999;
         }
+        .alphabet-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .alphabet-filter a {
+            text-decoration: none;
+            font-size: 18px;
+            color: #000;
+        }
+        .alphabet-filter a.active {
+            font-weight: bold;
+            color: #007bff;
+        }
     </style>
 </head>
 <body>
@@ -51,6 +66,11 @@
     <div>
         <input type="text" id="search" placeholder="Search by book title..." autocomplete="off">
     </div>
+    <div class="alphabet-filter">
+        @foreach(range('A', 'Z') as $letter)
+            <a href="#" data-letter="{{ $letter }}">{{ $letter }}</a>
+        @endforeach
+    </div>
     <div class="book-container" id="bookContainer">
     @foreach ($books->sortBy('title') as $book)
         @php
@@ -66,7 +86,7 @@
                 $status = 'Done Reading';
             }
         @endphp
-        <div class="book-card">
+        <div class="book-card" data-title="{{ $book->title }}">
             <h3>{{ $book->title }}</h3>
             <p class="author">By: {{ $book->author }}</p>
             <p class="pages">Pages: {{$book->pages}}</p>

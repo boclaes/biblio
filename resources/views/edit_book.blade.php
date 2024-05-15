@@ -22,11 +22,11 @@
         <label for="genre">Genre:</label><br>
         <input type="text" id="genre" name="genre" value="{{ $book->genre }}"><br>
 
-        <label for="genre">Genre:</label><br>
+        <label for="genre">Description:</label><br>
         <input type="text" id="description" name="description" value="{{ $book->description }}"><br>
 
         <button type="submit">Save</button>
     </form>
-    <a href="{{ route('books', $book->id) }}"><button type="button">Back to Books</button></a>
+    <a href="{{ route('books') }}"><button type="button">Back to Books</button></a>
 </body>
 </html>
