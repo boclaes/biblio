@@ -7,6 +7,7 @@ use App\Helpers\BookHelper;
 use App\Models\Book;
 use App\Models\Reviews;
 use App\Models\RejectedBook;
+use App\Models\Borrowing;
 use App\Models\AcceptedBook;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -433,4 +434,54 @@ class BookController extends Controller
         return redirect()->back()->with('success', 'Accepted book deleted successfully.');
     }
 
+    public function showAddBorrow()
+    {
+        $books = Book::where('borrowed', 0)->get(); // Fetch only books that are not currently borrowed
+        return view('add_borrow', compact('books'));
+    }
+    
+    public function storeBorrow(Request $request)
+    {
+        $request->validate([
+            'book_id' => 'required|exists:books,id',
+            'borrower_name' => 'required|string',
+            'borrowed_since' => 'required|date',
+        ]);
+    
+        $book = Book::findOrFail($request->book_id);
+        $book->borrowed = true;
+        $book->save();
+    
+        $borrowing = new Borrowing([
+            'book_id' => $request->book_id,
+            'borrower_name' => $request->borrower_name,
+            'borrowed_since' => $request->borrowed_since,
+        ]);
+        $borrowing->save();
+    
+        return redirect()->route('books')->with('success', 'Book borrowing recorded successfully.');
+    }    
+
+    public function showBorrowedBooks()
+    {
+        // Fetch all borrowings with related book details
+        $borrowings = Borrowing::with('book')->get();
+
+        return view('borrowed_books', compact('borrowings'));
+    }
+
+    public function returnBook(Borrowing $borrowing)
+    {
+        // Update the borrowed status of the book to 0
+        $book = $borrowing->book;
+        $book->borrowed = 0;
+        $book->save();
+    
+        // Delete the borrowing record
+        $borrowing->delete();
+    
+        // Redirect back with a success message
+        return redirect()->route('borrowed-books')->with('success', 'Book returned successfully!');
+    }    
+    
 }

@@ -10,45 +10,51 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
 
-    /**
-     * Define a many-to-many relationship with the Book model.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
-     */
+    protected static function booted()
+    {
+        static::deleting(function ($user) {
+            // Detach all related books
+            $user->books()->detach();
+            
+            // Optionally, find and delete books that no longer belong to any users
+            $orphanBooks = Book::has('users', '=', 0)->get();  // Fetch books with no more associated users
+            foreach ($orphanBooks as $orphanBook) {
+                $orphanBook->delete();  // Delete each orphan book
+            }
+    
+            // Delete all accepted and rejected books
+            $user->acceptedBooks()->delete();
+            $user->rejectedBooks()->delete();
+        });
+    }
+
     public function books()
     {
         return $this->belongsToMany(Book::class);
     }
+
+    public function acceptedBooks()
+    {
+        return $this->hasMany(AcceptedBook::class);
+    }
+
+    public function rejectedBooks()
+    {
+        return $this->hasMany(RejectedBook::class);
+    }
 }
-
-

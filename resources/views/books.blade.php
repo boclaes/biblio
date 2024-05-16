@@ -122,6 +122,8 @@
     <div class="navigation-buttons">
         <a href="{{ route('accepted.books') }}" class="recommendation-button">wishlist</a>
     </div>
+    <a href="{{ route('borrowed-books') }}" class="btn btn-info">View Borrowed Books</a>
+    <a href="{{ route('books.addBorrow') }}" class="btn btn-info">Add Borrow</a>
     <a href="{{ route('home') }}"><button type="button">Search books</button></a>
 
     <script src="{{ asset('js/sorting.js') }}"></script>

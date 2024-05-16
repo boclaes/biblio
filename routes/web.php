@@ -7,7 +7,9 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\AccountController;
 use Illuminate\Support\Facades\Log;
+
 
 // Public Routes
 Route::get('/', function (Request $request) {
@@ -40,6 +42,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/search', [BookController::class, 'search'])->name('search');
     Route::post('/add-book', [BookController::class, 'addBook'])->name('addBook');
     Route::delete('/book/{id}', [BookController::class, 'delete'])->name('delete.book');
+
+    // Book Borrow
+    Route::get('/books/add-borrow', [BookController::class, 'showAddBorrow'])->name('books.addBorrow');
+    Route::post('/books/add-borrow', [BookController::class, 'storeBorrow'])->name('books.storeBorrow');    
+    Route::get('/borrowed-books', [BookController::class, 'showBorrowedBooks'])->name('borrowed-books');
+    Route::delete('/borrowings/{borrowing}', [BookController::class, 'returnBook'])->name('borrowings.return');
     
     // Book Notes and Reviews
     Route::post('/books/{id}/save-notes', [BookController::class, 'saveNotes'])->name('save.notes');
@@ -66,17 +74,13 @@ Route::middleware(['auth'])->group(function () {
     // Fetch Books
     Route::get('/fetch-books', [BookController::class, 'recommendBook'])->name('fetch-books');
 
-
-    Route::get('/test-env', function () {
-        $apiKey = env('GOOGLE_CSE_API_KEY');
-        $cx = env('GOOGLE_CSE_CX');
-    
-        Log::info("GOOGLE_CSE_API_KEY: " . $apiKey);
-        Log::info("GOOGLE_CSE_CX: " . $cx);
-    
-        return response()->json([
-            'GOOGLE_CSE_API_KEY' => $apiKey,
-            'GOOGLE_CSE_CX' => $cx
-        ]);
-    });
 });
+
+Route::group(['middleware' => 'auth', 'prefix' => 'account'], function () {
+    Route::get('settings', [AccountController::class, 'showSettings'])->name('account.settings');
+    Route::post('update-name', [AccountController::class, 'updateName'])->name('account.name');
+    Route::post('update-email', [AccountController::class, 'updateEmail'])->name('account.email');
+    Route::post('update-password', [AccountController::class, 'updatePassword'])->name('account.password');
+    Route::post('delete', [AccountController::class, 'deleteAccount'])->name('account.delete');
+});
+    

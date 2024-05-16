@@ -50,38 +50,47 @@ class BookHelper
             'Young Adult (YA) Fiction', 'Historical Fiction', 'Horror',
             'Literary Fiction', 'Adventure', 'Non-Fiction', 'Biography',
             'Memoir', 'Self-Help', 'Health & Wellness', 'Children’s Literature',
-            'Crime', 'Graphic Novel', 'Paranormal', 'Classics'
-        ];
+            'Crime', 'Graphic Novel', 'Paranormal', 'Classics', 'Humor',
+            'Western', 'Dystopian', 'Contemporary', 'Psychological Thriller',
+            'Action and Adventure', 'Espionage', 'Urban Fantasy', 'Epic Fantasy',
+            'Middle Grade', 'Picture Books', 'Erotica', 'True Crime', 'War & Military',
+            'History', 'Philosophy', 'Poetry', 'Self-Improvement', 'Business',
+            'Science & Technology', 'Cookbooks', 'Art & Photography', 'Religious & Spiritual',
+            'Gardening & Horticulture', 'Sports', 'Travel', 'True Adventure',
+            'Music', 'Fairy Tales', 'Folklore', 'Drama', 'Crafts & Hobbies',
+            'Parenting & Families', 'Health & Fitness', 'Medical', 'Political',
+            'Legal Thriller', 'Sociology', 'Anthropology', 'Cyberpunk', 'Steam Punk',
+            'Historical Romance', 'Regency Romance', 'Inspirational', 'Alternative History',
+            'Realistic Fiction'
+        ];        
     
         // Ensure $genres is an array
         if (is_string($genres)) {
             $genres = explode(' / ', $genres);
         }
     
-        // Remove any genre containing "&"
-        $genres = array_filter($genres, function($genre) {
-            if (strpos($genre, '&') !== false) {
-                Log::info('Genre contains "&": ' . $genre . '. Removing from the list.');
-                return false;
-            }
-            return true;
-        });
+        // Normalize genres by removing "&" and trimming spaces
+        $normalizedGenres = array_map(function($genre) {
+            $genre = str_replace('&', 'and', $genre); // Replace '&' with 'and'
+            return trim($genre); // Trim spaces
+        }, $genres);
     
-        // Log the genres input for debugging
-        Log::info('Genres input after removing "&": ', $genres);
+        // Log the normalized genres
+        Log::info('Normalized genres:', $normalizedGenres);
     
-        foreach ($preferredGenres as $preferredGenre) {
-            if (in_array($preferredGenre, $genres)) {
-                // Log the selected genre
-                Log::info('Selected genre: ' . $preferredGenre);
-                return $preferredGenre; // Return the first matching preferred genre
-            }
+        // Filter genres against the preferred list
+        $matchedGenres = array_intersect($normalizedGenres, $preferredGenres);
+        if (!empty($matchedGenres)) {
+            $selectedGenre = reset($matchedGenres); // Get the first matched genre
+            Log::info('Selected genre: ' . $selectedGenre);
+            return $selectedGenre;
         }
     
-        // Log the fallback genre
-        Log::info('Fallback genre: ' . ($genres[0] ?? 'Fiction'));
-        return $genres[0] ?? 'Fiction'; // Default to the first available genre or 'Fiction' if none match
-    }    
+        // If no preferred genre is matched, fallback to the first available or 'Fiction'
+        $fallbackGenre = !empty($normalizedGenres) ? reset($normalizedGenres) : 'Fiction';
+        Log::info('Fallback genre: ' . $fallbackGenre);
+        return $fallbackGenre;
+    }     
 
     private function getGoogleImage($title)
     {

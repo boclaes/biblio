@@ -21,7 +21,8 @@
         <input id="searchInput" type="text" name="query" placeholder="Enter ISBN or Book Title" required autofocus autocomplete="off">
         <button type="submit">Search Book</button>
     </form>
-    <button onclick="window.location.href='/books';">Books</button>
+    <a href="{{ route('account.settings') }}"><button type="button">Account settings</button></a>
+    <a href="{{ route('books') }}"><button type="button">Library</button></a>
     <form method="POST" action="{{ route('logout') }}">
         @csrf
         <button type="submit">Logout</button>

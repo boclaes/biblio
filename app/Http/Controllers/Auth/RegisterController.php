@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -28,11 +29,14 @@ class RegisterController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
             ]);
+
+            // Log the user in
+            Auth::login($user);
     
-            return redirect()->route('login')->with('success', 'Registration successful. Please log in.');
+            return redirect()->route('home')->with('success', 'Registration successful. Welcome!');
         } catch (\Exception $e) {
             logger()->error('Registration failed: ' . $e->getMessage());
             return back()->withInput()->withErrors(['email' => 'The email address is already in use. Please use a different email address.']);
         }
-    }    
+    }
 }
