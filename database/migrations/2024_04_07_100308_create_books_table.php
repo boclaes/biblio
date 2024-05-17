@@ -15,6 +15,7 @@ class CreateBooksTable extends Migration
     {
         Schema::create('books', function (Blueprint $table) {
             $table->id();
+            $table->string('google_books_id')->unique()->nullable();
             $table->string('title');
             $table->string('author');
             $table->string('year')->nullable();  // Changed from year type to string type to match your SQL dump structure
