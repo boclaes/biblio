@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accepted Books</title>
+@extends('layouts.app_with_filters', ['includeRatings' => false, 'includePages' => true])
+
+@section('title', 'Accepted Books')
+
+@section('content')
     <style>
         .book-container {
             display: flex;
@@ -26,42 +25,28 @@
             z-index: 999;
         }
     </style>
-</head>
-<body>
+
     <h2>Accepted Books</h2>
-    <div class="dropdown">
-        <label for="sort">Sort By:</label>
-        <select id="sort">
-            <option value="name_asc">Name (A-Z)</option>
-            <option value="name_desc">Name (Z-A)</option>
-            <option value="author">Author (A-Z)</option>
-            <option value="pages">Pages</option>
-        </select>
-    </div>
-    <div>
-        <input type="text" id="search" placeholder="Search by book title..." autocomplete="off">
-    </div>
     <div class="book-container" id="bookContainer">
-    @foreach ($acceptedBooks as $book)
-        <div class="book-card">
-            <h3>{{ $book->title }}</h3>
-            <p class="author">By: {{ $book->author }}</p>
-            <p class="pages">Pages: {{$book->pages}}</p>
-            @if ($book->cover)
-                <img src="{{ $book->cover }}" alt="Book Cover" class="book-image">
-            @endif
-            @if ($book->purchase_link)
-                <a href="{{ $book->purchase_link }}" target="_blank">Buy this book</a>
-            @endif
-            <form action="{{ route('delete.accepted.book', $book->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this book?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit">Delete</button>
-            </form>
-        </div>
+        @foreach ($acceptedBooks as $book)
+            <div class="book-card">
+                <h3>{{ $book->title }}</h3>
+                <p class="author">By: {{ $book->author }}</p>
+                <p class="pages">Pages: {{$book->pages}}</p>
+                @if ($book->cover)
+                    <img src="{{ $book->cover }}" alt="Book Cover" class="book-image">
+                @endif
+                @if ($book->purchase_link)
+                    <a href="{{ $book->purchase_link }}" target="_blank">Buy this book</a>
+                @endif
+                <form action="{{ route('delete.accepted.book', $book->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this book?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit">Delete</button>
+                </form>
+            </div>
         @endforeach
     </div>
-    <a href="{{ route('books') }}" style="display: block; margin-top: 20px;">Back to Home</a>
+    <a href="{{ route('books') }}" style="display: block; margin-top: 20px;"><button type="button">Back home</button></a>
     <script src="{{ asset('js/sorting.js') }}"></script>
-</body>
-</html>
+@endsection

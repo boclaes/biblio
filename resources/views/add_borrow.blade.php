@@ -1,12 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Book Borrow</title>
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
-</head>
-<body>
+@extends('layouts.app')
+
+@section('title', 'Add borrow')
+
+@section('content')
 <div class="container">
     <h1>Who borrowed my book?</h1>
     <form action="{{ route('books.storeBorrow') }}" method="POST">
@@ -28,9 +24,8 @@
             <input type="date" id="borrowed_since" name="borrowed_since" class="form-control" required>
         </div>
         <button type="submit" class="btn btn-primary">Save</button>
-        <a href="{{ url()->previous() }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ route('books') }}"><button type="button">Cancel</button></a>
     </form>
 </div>
 <script src="{{ asset('js/app.js') }}"></script>
-</body>
-</html>
+@endsection

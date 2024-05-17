@@ -57,7 +57,7 @@
                 <button type="submit" onclick="return confirm('Are you sure you want to delete your account?');">Delete Account</button>
             </form>
         </div>
-        <a href="{{ route('home') }}"><button type="button">Back</button></a>
+        <a href="{{ route('books') }}"><button type="button">Back</button></a>
     </div>
 
     <script>

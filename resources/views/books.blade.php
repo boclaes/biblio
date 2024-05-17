@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Book List</title>
+@extends('layouts.app_with_filters', ['includeRatings' => true, 'includePages' => true])
+
+@section('title', 'Simple Book List')
+
+@section('content')
     <style>
         .book-container {
             display: flex;
@@ -14,6 +13,11 @@
             width: 200px;
             border: 1px solid #ccc;
             padding: 10px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease; /* Smooth transition */
+        }
+        .book-card:hover {
+            transform: scale(1.05); /* Slightly larger on hover */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow effect */
         }
         .book-image {
             width: 100%;
@@ -27,105 +31,62 @@
             font-size: 24px;
             color: gold;
         }
-        .dropdown {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 999;
-        }
-        .alphabet-filter {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            justify-content: center;
-        }
-        .alphabet-filter a {
-            text-decoration: none;
-            font-size: 18px;
-            color: #000;
-        }
-        .alphabet-filter a.active {
-            font-weight: bold;
-            color: #007bff;
-        }
     </style>
-</head>
-<body>
+
     <h2>Your books</h2>
-    <div class="dropdown">
-        <label for="sort">Sort By:</label>
-        <select id="sort">
-            <option value="name_asc">Name (A-Z)</option>
-            <option value="name_desc">Name (Z-A)</option>
-            <option value="rating_asc">Rating (Lowest First)</option>
-            <option value="rating_desc">Rating (Highest First)</option>
-            <option value="author">Author (A-Z)</option>
-            <option value="pages">Pages</option>
-        </select>
-    </div>
-    <div>
-        <input type="text" id="search" placeholder="Search by book title..." autocomplete="off">
-    </div>
-    <div class="alphabet-filter">
-        @foreach(range('A', 'Z') as $letter)
-            <a href="#" data-letter="{{ $letter }}">{{ $letter }}</a>
+    <div class="book-container" id="bookContainer">
+        @foreach ($books->sortBy('title') as $book)
+            @php
+                $rating = $book->reviews->avg('rating');
+                $rating = $rating ? $rating : 0;
+                $numStars = round($rating);
+                $status = '';
+                if ($book->want_to_read) {
+                    $status = 'Want to Read';
+                } elseif ($book->reading) {
+                    $status = 'Reading';
+                } elseif ($book->done_reading) {
+                    $status = 'Done Reading';
+                }
+            @endphp
+            <div class="book-card" data-title="{{ $book->title }}">
+                <h3>{{ $book->title }}</h3>
+                <p class="author">By: {{ $book->author }}</p>
+                <p class="pages">Pages: {{$book->pages}}</p>
+                @if ($status)
+                    <p class="status">{{ $status }}</p>
+                @endif
+                <div class="stars" data-rating="{{ $numStars }}">
+                    @for ($i = 1; $i <= $numStars; $i++)
+                        <span class="star">&#9733;</span>
+                    @endfor
+                    @for ($i = $numStars + 1; $i <= 5; $i++)
+                        <span class="star">&#9734;</span>
+                    @endfor
+                </div>
+                @if ($book->cover)
+                    <a href="{{ route('details.book', $book->id) }}">
+                        <img src="{{ $book->cover }}" alt="Book Cover" class="book-image">
+                    </a>
+                @else
+                    <p>No Cover Image</p>
+                @endif
+                <a href="{{ route('edit.book', $book->id) }}">Edit Book</a> <!-- New Edit Book button -->
+                <form action="{{ route('delete.book', $book->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this book?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit">Delete</button>
+                </form>
+            </div>
         @endforeach
     </div>
-    <div class="book-container" id="bookContainer">
-    @foreach ($books->sortBy('title') as $book)
-        @php
-            $rating = $book->reviews->avg('rating');
-            $rating = $rating ? $rating : 0;
-            $numStars = round($rating);
-            $status = '';
-            if ($book->want_to_read) {
-                $status = 'Want to Read';
-            } elseif ($book->reading) {
-                $status = 'Reading';
-            } elseif ($book->done_reading) {
-                $status = 'Done Reading';
-            }
-        @endphp
-        <div class="book-card" data-title="{{ $book->title }}">
-            <h3>{{ $book->title }}</h3>
-            <p class="author">By: {{ $book->author }}</p>
-            <p class="pages">Pages: {{$book->pages}}</p>
-            @if ($status)
-                <p class="status">{{ $status }}</p>
-            @endif
-            <div class="stars" data-rating="{{ $numStars }}">
-                @for ($i = 1; $i <= $numStars; $i++)
-                    <span class="star">&#9733;</span>
-                @endfor
-                @for ($i = $numStars + 1; $i <= 5; $i++)
-                    <span class="star">&#9734;</span>
-                @endfor
-            </div>
-            @if ($book->cover)
-                <img src="{{ $book->cover }}" alt="Book Cover" class="book-image">
-            @else
-                <p>No Cover Image</p>
-            @endif
-            <a href="{{ route('details.book', $book->id) }}">Details</a>
-            <a href="{{ route('edit.book', $book->id) }}">Edit Book</a> <!-- New Edit Book button -->
-            <form action="{{ route('delete.book', $book->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this book?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit">Delete</button>
-            </form>
-        </div>
-    @endforeach
+    <div class="navigation-buttons">
+        <a href="{{ route('book.recommend') }}" class="recommendation-button"><button type="button">Get Book Recommendations</button></a>
     </div>
     <div class="navigation-buttons">
-        <a href="{{ route('book.recommend') }}" class="recommendation-button">Get Book Recommendations</a>
+        <a href="{{ route('accepted.books') }}" class="recommendation-button"><button type="button">Wishlist</button></a>
     </div>
-    <div class="navigation-buttons">
-        <a href="{{ route('accepted.books') }}" class="recommendation-button">wishlist</a>
-    </div>
-    <a href="{{ route('borrowed-books') }}" class="btn btn-info">View Borrowed Books</a>
-    <a href="{{ route('books.addBorrow') }}" class="btn btn-info">Add Borrow</a>
+    <a href="{{ route('borrowed-books') }}" class="btn btn-info"><button type="button">View Borrowed books</button></a>
+    <a href="{{ route('books.addBorrow') }}" class="btn btn-info"><button type="button">Add Borrow</button></a>
     <a href="{{ route('home') }}"><button type="button">Search books</button></a>
-
-    <script src="{{ asset('js/sorting.js') }}"></script>
-</body>
-</html>
+@endsection

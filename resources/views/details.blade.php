@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Details</title>
+@extends('layouts.app')
+
+@section('title', 'Book Details')
+
+@section('content')
     <style>
         .container {
             display: flex;
@@ -45,8 +44,7 @@
             color: gold;
         }
     </style>
-</head>
-<body>
+
     <div class="container">
         <div class="book-card">
             <h3>{{ $book->title }}</h3>
@@ -102,5 +100,4 @@
     </div>
     <a href="{{ route('books') }}"><button type="button">Back</button></a>
     <script src="{{ asset('js/books.js') }}"></script>
-</body>
-</html>
+@endsection
