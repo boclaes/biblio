@@ -10,6 +10,7 @@ class Book extends Model
     use HasFactory;
 
     protected $fillable = [
+        'google_books_id',
         'title',
         'author',
         'year',
@@ -23,6 +24,7 @@ class Book extends Model
         'reading',
         'done_reading',
     ];
+    
     
 
     public function users()

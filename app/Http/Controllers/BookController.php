@@ -35,9 +35,10 @@ class BookController extends Controller
     public function search(Request $request)
     {
         $query = $request->input('query');
+        $searchType = $request->input('searchType');
     
-        // Check if the input is a numeric ISBN (assuming ISBN-13 here)
-        if (is_numeric($query) && (strlen($query) == 10 || strlen($query) == 13)) {
+        if ($searchType === 'isbn') {
+            // Handle ISBN search
             $bookDetails = $this->bookHelper->getBookDetailsByISBN($query);
     
             if (!$bookDetails) {
@@ -59,7 +60,6 @@ class BookController extends Controller
             } catch (ModelNotFoundException $exception) {
                 return redirect()->route('home')->with('error', 'Failed to add book to your collection');
             }
-    
         } else {
             // Handle book title search
             $books = $this->bookHelper->searchBooksByTitle($query);
@@ -67,18 +67,31 @@ class BookController extends Controller
             if (empty($books)) {
                 return redirect()->route('home')->with('error', 'No books found with that title');
             }
-
+    
             $books = array_slice($books, 0, 5);
     
-            return view('selectBook', ['books' => $books]); // Passing results to a view for selection
+            // Get the titles of books in the user's library
+            $user = Auth::user();
+            $userBooks = $user->books()->get();
+    
+            // Create a mapping of titles to local IDs
+            $userBookMap = $userBooks->pluck('id', 'title')->toArray();
+    
+            return view('selectBook', [
+                'books' => $books,
+                'userBookMap' => $userBookMap,
+                'query' => $query, // Pass the query back to the view
+            ]);
         }
-    }  
+    }
     
     public function addBook(Request $request)
     {
         Log::info('Received data for adding book:', $request->all());
     
-        $bookId = $request->input('bookId');  // Now using bookId instead of bookTitle
+        $bookId = $request->input('bookId');
+        $query = $request->input('query');
+        $searchType = $request->input('searchType', 'isbn'); // Default to 'isbn' if not provided
     
         $bookDetails = $this->bookHelper->getBookDetailsById($bookId);
     
@@ -100,12 +113,17 @@ class BookController extends Controller
             $book->save();
             $user->books()->attach($book);
     
-            return redirect()->route('home')->with('success', 'Book added to your library successfully.');
+            if ($searchType === 'title') {
+                return redirect()->route('search', ['query' => $query])->with('success', 'Book added to your library successfully.');
+            } else {
+                return redirect()->route('home')->with('success', 'Book added to your library successfully.');
+            }
         } catch (\Exception $e) {
             Log::error('Failed to add book: ' . $e->getMessage());
             return redirect()->route('home')->with('error', 'Failed to add book to your collection.');
         }
     }
+    
     
     public function list()
     {
@@ -116,29 +134,36 @@ class BookController extends Controller
         return view('books', compact('books'));
     }
 
-    public function delete($id)
+    public function delete(Request $request, $id)
     {
         $book = Book::findOrFail($id);
         $book->delete();
-
-        // Also, remove the book from the pivot table (book_user) if it exists
+    
         $user = Auth::user();
         $user->books()->detach($id);
-
+    
+        $query = $request->input('query');
+        if ($query) {
+            return redirect()->route('search', ['query' => $query])->with('success', 'Book deleted successfully.');
+        }
+    
         return redirect()->back()->with('success', 'Book deleted successfully.');
     }
-
-    public function editBook($id)
+    
+    
+    public function editBook(Request $request, $id)
     {
         $user = Auth::user();
         $book = $user->books()->find($id);
-
+    
         if (!$book) {
             return redirect()->route('home')->with('error', 'You do not have permission to edit this book.');
         }
-
-        return view('edit_book', compact('book'));
+    
+        $query = $request->input('query');
+        return view('edit_book', compact('book', 'query'));
     }
+    
 
     public function updateBook(Request $request, $id)
     {
@@ -148,22 +173,28 @@ class BookController extends Controller
             'pages' => 'required|integer|min:1',
             'description' => 'required|string',
         ]);
-
+    
         $user = Auth::user();
         $book = $user->books()->find($id);
-
+    
         if (!$book) {
             return redirect()->route('home')->with('error', 'You do not have permission to edit this book.');
         }
-
+    
         $book->title = $request->input('title');
         $book->author = $request->input('author');
         $book->pages = $request->input('pages');
         $book->description = $request->input('description');
         $book->save();
-
+    
+        $query = $request->input('query');
+        if ($query) {
+            return redirect()->route('search', ['query' => $query])->with('success', 'Book details updated successfully.');
+        }
+    
         return redirect()->route('books', $book->id)->with('success', 'Book details updated successfully.');
     }
+    
 
 
     public function saveNotes(Request $request, $id)
