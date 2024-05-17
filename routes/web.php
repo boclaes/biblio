@@ -8,8 +8,6 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\AccountController;
-use Illuminate\Support\Facades\Log;
-
 
 // Public Routes
 Route::get('/', function (Request $request) {
@@ -40,6 +38,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/books', [BookController::class, 'list'])->name('books');
     Route::get('/books/{id}/details', [BookController::class, 'showDetails'])->name('details.book');
     Route::post('/search', [BookController::class, 'search'])->name('search');
+    Route::get('/search', [BookController::class, 'search'])->name('search');
     Route::post('/add-book', [BookController::class, 'addBook'])->name('addBook');
     Route::delete('/book/{id}', [BookController::class, 'delete'])->name('delete.book');
 
@@ -83,4 +82,3 @@ Route::group(['middleware' => 'auth', 'prefix' => 'account'], function () {
     Route::post('update-password', [AccountController::class, 'updatePassword'])->name('account.password');
     Route::post('delete', [AccountController::class, 'deleteAccount'])->name('account.delete');
 });
-    
