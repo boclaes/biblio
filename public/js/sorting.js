@@ -34,10 +34,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 books.sort((a, b) => b.querySelector('h3').textContent.localeCompare(a.querySelector('h3').textContent));
                 break;
             case 'rating_asc':
-                books.sort((a, b) => parseInt(a.querySelector('.stars').dataset.rating) - parseInt(b.querySelector('.stars').dataset.rating));
+                if (document.querySelector('.stars')) {
+                    books.sort((a, b) => parseInt(a.querySelector('.stars').dataset.rating) - parseInt(b.querySelector('.stars').dataset.rating));
+                }
                 break;
             case 'rating_desc':
-                books.sort((a, b) => parseInt(b.querySelector('.stars').dataset.rating) - parseInt(a.querySelector('.stars').dataset.rating));
+                if (document.querySelector('.stars')) {
+                    books.sort((a, b) => parseInt(b.querySelector('.stars').dataset.rating) - parseInt(a.querySelector('.stars').dataset.rating));
+                }
                 break;
             case 'author':
                 books.sort((a, b) => {
@@ -47,11 +51,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 break;
             case 'pages':
-                books.sort((a, b) => {
-                    const pagesA = a.querySelector('.pages').textContent.split(': ')[1];
-                    const pagesB = b.querySelector('.pages').textContent.split(': ')[1];
-                    return sortPages(pagesA, pagesB);
-                });
+                if (document.querySelector('.pages')) {
+                    books.sort((a, b) => {
+                        const pagesA = a.querySelector('.pages').textContent.split(': ')[1];
+                        const pagesB = b.querySelector('.pages').textContent.split(': ')[1];
+                        return sortPages(pagesA, pagesB);
+                    });
+                }
                 break;
         }
 
