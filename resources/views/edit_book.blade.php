@@ -1,26 +1,48 @@
 @extends('layouts.app')
 
-@section('title', 'Book Details')
+@section('title', 'Edit Book')
 
 @section('content')
+    <h2>Edit Book</h2>
 
-    <h1>Edit Book Details for {{ $book->title }}</h1>
-    <form method="POST" action="{{ route('update.book', $book->id) }}">
+    @if ($errors->any())
+        <div style="color: red;">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form method="post" action="{{ route('update.book', ['id' => $book->id]) }}">
         @csrf
         @method('PUT')
-        <label for="title">Title:</label><br>
-        <input type="text" id="title" name="title" value="{{ $book->title }}"><br>
 
-        <label for="author">Author:</label><br>
-        <input type="text" id="author" name="author" value="{{ $book->author }}"><br>
+        <input type="hidden" name="query" value="{{ old('query', $query) }}">
 
-        <label for="pages">Pages:</label><br>
-        <input type="number" id="pages" name="pages" value="{{ $book->pages }}"><br>
+        <div>
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" value="{{ old('title', $book->title) }}" required>
+        </div>
 
-        <label for="genre">Description:</label><br>
-        <input type="text" id="description" name="description" value="{{ $book->description }}"><br>
+        <div>
+            <label for="author">Author:</label>
+            <input type="text" id="author" name="author" value="{{ old('author', $book->author) }}" required>
+        </div>
 
-        <button type="submit">Save</button>
+        <div>
+            <label for="pages">Pages:</label>
+            <input type="number" id="pages" name="pages" value="{{ old('pages', $book->pages) }}" required>
+        </div>
+
+        <div>
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" required>{{ old('description', $book->description) }}</textarea>
+        </div>
+
+        <button type="submit">Update Book</button>
     </form>
-    <a href="{{ route('books') }}"><button type="button">Back to Books</button></a>
+
+    <a href="{{ route('home') }}"><button type="button">Back</button></a>
 @endsection

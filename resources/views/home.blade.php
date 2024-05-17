@@ -8,6 +8,7 @@
     <form id="searchForm" method="post" action="{{ route('search') }}">
         @csrf
         <input id="searchInput" type="text" name="query" placeholder="Enter ISBN or Book Title" required autofocus autocomplete="off">
+        <input id="searchType" type="hidden" name="searchType" value="title"> <!-- Default to title -->
         <button type="submit">Search Book</button>
     </form>
     <a href="{{ route('books') }}"><button type="button">Library</button></a>
@@ -17,10 +18,13 @@
             document.getElementById('searchInput').focus();
         };
 
-        document.getElementById('searchForm').addEventListener('input', function(event) {
+        document.getElementById('searchInput').addEventListener('input', function(event) {
             const input = event.target.value;
-            if (input.length == 13 && !isNaN(input)) { // Additional check for non-numeric
-                document.getElementById('searchForm').submit();
+            const searchTypeInput = document.getElementById('searchType');
+            if (input.length == 10 || input.length == 13 && !isNaN(input)) { // ISBN check
+                searchTypeInput.value = 'isbn';
+            } else {
+                searchTypeInput.value = 'title';
             }
         });
     </script>

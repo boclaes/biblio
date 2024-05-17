@@ -19,23 +19,43 @@
     @endif
 
     @forelse ($books as $book)
-        <div style="margin-bottom: 20px;">
-            <img src="{{ $book['volumeInfo']['imageLinks']['thumbnail'] ?? asset('images/default_cover.jpg') }}" alt="Cover Image" style="height: 100px; vertical-align: middle; margin-right: 10px;">
-            <div style="display: inline-block; vertical-align: middle;">
-                <p>{{ $book['volumeInfo']['title'] }}
-                    @if (isset($book['volumeInfo']['authors']))
-                        by {{ implode(', ', $book['volumeInfo']['authors']) }}
-                    @else
-                        <em>Unknown Author</em>
+    <div style="margin-bottom: 20px;">
+        <img src="{{ $book['volumeInfo']['imageLinks']['thumbnail'] ?? asset('images/default_cover.jpg') }}" alt="Cover Image" style="height: 100px; vertical-align: middle; margin-right: 10px;">
+        <div style="display: inline-block; vertical-align: middle;">
+            <p>{{ $book['volumeInfo']['title'] }}
+                @if (isset($book['volumeInfo']['authors']))
+                    by {{ implode(', ', $book['volumeInfo']['authors']) }}
+                @else
+                    <em>Unknown Author</em>
+                @endif
+            </p>
+
+            @if (array_key_exists($book['volumeInfo']['title'], $userBookMap))
+                <form method="post" action="{{ route('delete.book', ['id' => $userBookMap[$book['volumeInfo']['title']]]) }}" style="display: inline;">
+                    @csrf
+                    @method('DELETE')
+                    @if (request('query'))
+                        <input type="hidden" name="query" value="{{ request('query') }}">
                     @endif
-                </p>
+                    <button type="submit">Delete from Library</button>
+                </form>
+                <form method="get" action="{{ route('edit.book', ['id' => $userBookMap[$book['volumeInfo']['title']]]) }}" style="display: inline;">
+                    @if (request('query'))
+                        <input type="hidden" name="query" value="{{ request('query') }}">
+                    @endif
+                    <button type="submit">Edit</button>
+                </form>
+            @else
                 <form method="post" action="{{ route('addBook') }}">
                     @csrf
                     <input type="hidden" name="bookId" value="{{ $book['id'] }}">
+                    <input type="hidden" name="query" value="{{ request('query') }}">
+                    <input type="hidden" name="searchType" value="title">
                     <button type="submit">Add to Library</button>
                 </form>
-            </div>
+            @endif
         </div>
+    </div>
     @empty
         <p>No books found for your search query.</p>
     @endforelse
