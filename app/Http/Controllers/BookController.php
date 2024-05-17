@@ -146,7 +146,6 @@ class BookController extends Controller
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
             'pages' => 'required|integer|min:1',
-            'genre' => 'required|string|max:255',
             'description' => 'required|string',
         ]);
 
@@ -160,7 +159,6 @@ class BookController extends Controller
         $book->title = $request->input('title');
         $book->author = $request->input('author');
         $book->pages = $request->input('pages');
-        $book->genre = $request->input('genre');
         $book->description = $request->input('description');
         $book->save();
 
