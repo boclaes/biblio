@@ -5,7 +5,10 @@ namespace App\Helpers;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Book;
+use App\Models\User;
+
 
 class BookHelper
 {
@@ -18,29 +21,38 @@ class BookHelper
         if (strlen($description) > $maxLength) {
             $truncated = substr($description, 0, $maxLength);
 
-            // Find the last occurrence of sentence-ending punctuation within the truncated string
             $lastPunctuation = max(
                 strrpos($truncated, '.'),
                 strrpos($truncated, '!'),
                 strrpos($truncated, '?')
             );
 
-            // If a complete sentence end is found within the truncated string, truncate at that point
             if ($lastPunctuation !== false && $lastPunctuation >= $maxLength - 50) {
                 $description = substr($truncated, 0, $lastPunctuation + 1) . '...';
             } else {
-                // Otherwise, find the last space to avoid cutting a word in half
                 $lastSpace = strrpos($truncated, ' ');
                 if ($lastSpace !== false && $lastSpace >= $maxLength - 50) {
                     $description = substr($truncated, 0, $lastSpace) . '...';
                 } else {
-                    // Fallback to the original truncation if no space is found
                     $description = rtrim($truncated) . '...';
                 }
             }
         }
 
         return $description;
+    }
+
+    private function isBookValid($book, $exclusionList)
+    {
+        $info = $book['volumeInfo'] ?? [];
+        $title = strtolower(trim($info['title'] ?? ''));
+        $authors = isset($info['authors']) ? implode(", ", $info['authors']) : '';
+        $authors = strtolower(trim($authors));
+        $publishedDate = substr($info['publishedDate'] ?? '', 0, 4);
+        $bookKey = "{$title}|{$authors}|{$publishedDate}";
+
+        Log::info("Checking book: {$bookKey}");
+        return !in_array($bookKey, $exclusionList);
     }
 
     private function selectRelevantGenre($genres)
@@ -63,30 +75,25 @@ class BookHelper
             'Historical Romance', 'Regency Romance', 'Inspirational', 'Alternative History',
             'Realistic Fiction'
         ];        
-    
-        // Ensure $genres is an array
+
         if (is_string($genres)) {
             $genres = explode(' / ', $genres);
         }
-    
-        // Normalize genres by removing "&" and trimming spaces
+
         $normalizedGenres = array_map(function($genre) {
-            $genre = str_replace('&', 'and', $genre); // Replace '&' with 'and'
-            return trim($genre); // Trim spaces
+            $genre = str_replace('&', 'and', $genre);
+            return trim($genre);
         }, $genres);
-    
-        // Log the normalized genres
+
         Log::info('Normalized genres:', $normalizedGenres);
-    
-        // Filter genres against the preferred list
+
         $matchedGenres = array_intersect($normalizedGenres, $preferredGenres);
         if (!empty($matchedGenres)) {
-            $selectedGenre = reset($matchedGenres); // Get the first matched genre
+            $selectedGenre = reset($matchedGenres);
             Log::info('Selected genre: ' . $selectedGenre);
             return $selectedGenre;
         }
-    
-        // If no preferred genre is matched, fallback to the first available or 'Fiction'
+
         $fallbackGenre = !empty($normalizedGenres) ? reset($normalizedGenres) : 'Fiction';
         Log::info('Fallback genre: ' . $fallbackGenre);
         return $fallbackGenre;
@@ -94,79 +101,73 @@ class BookHelper
 
     private function getGoogleImage($title)
     {
-        // Explicitly load environment variables
         $apiKey = config('GOOGLE_CSE_API_KEY', env('GOOGLE_CSE_API_KEY'));
         $cx = config('GOOGLE_CSE_CX', env('GOOGLE_CSE_CX'));
         
-        // Add logging for debugging
         Log::info("Google CSE API Key: " . $apiKey);
         Log::info("Google CSE CX: " . $cx);
-    
+
         if (empty($apiKey) || empty($cx)) {
             Log::error("API key or CX is not set in the environment variables.");
             return asset('images/default_cover.jpg');
         }
-    
+
         $query = urlencode($title . ' book cover');
         $url = "https://www.googleapis.com/customsearch/v1?q={$query}&cx={$cx}&key={$apiKey}&searchType=image&num=1";
-    
+
         Log::info("Fetching Google Image with URL: {$url}");
-    
+
         $response = Http::get($url);
         if ($response->successful()) {
             $data = $response->json();
             Log::info("Google Image Search Response: ", $data);
-    
+
             if (!empty($data['items'][0]['link'])) {
                 return $data['items'][0]['link'];
             }
         } else {
             Log::error("Failed to fetch Google Image: " . $response->body());
         }
-    
-        return asset('images/default_cover.jpg'); // Fallback to default image
+
+        return asset('images/default_cover.jpg');
     }    
 
     private function formatBookDetails($bookItem)
     {
-        // Ensure we have volumeInfo
         $bookInfo = $bookItem['volumeInfo'] ?? [];
-    
-        if (!isset($bookInfo['title'])) {
-            Log::error("Title not found in book information");
+
+        if (empty($bookInfo['title'])) {
+            Log::error("Title not found in book information: " . json_encode($bookInfo));
             return [
                 'error' => 'Title not found in book information'
             ];
         }
-    
+
         $title = $bookInfo['title'];
         $cover = $bookInfo['imageLinks']['thumbnail'] ?? $this->getGoogleImage($title);
         Log::info("Selected Cover Image for '{$title}': {$cover}");
-    
+
         return [
-            'google_books_id' => $bookItem['id'] ?? null, // Extract Google Books ID from the book item
+            'google_books_id' => $bookItem['id'] ?? null,
             'title' => $title,
-            'author' => implode(", ", $bookInfo['authors'] ?? []),
-            'year' => $bookInfo['publishedDate'] ?? null,
+            'author' => implode(", ", $bookInfo['authors'] ?? ['Unknown Author']),
+            'year' => $bookInfo['publishedDate'] ?? 'Unknown Year',
             'description' => $this->cleanDescription($bookInfo['description'] ?? 'Description not available'),
             'cover' => $cover,
-            'genre' => $this->selectRelevantGenre($bookInfo['categories'] ?? []),
-            'pages' => isset($bookInfo['pageCount']) && $bookInfo['pageCount'] > 0 ? $bookInfo['pageCount'] : 0,
+            'genre' => $this->selectRelevantGenre($bookInfo['categories'] ?? ['Classics']),
+            'pages' => isset($bookInfo['pageCount']) && $bookInfo['pageCount'] > 0 ? $bookInfo['pageCount'] : 'N/A',
         ];
-    }
-    
-             
+    }  
 
     public function getBookDetailsByISBN($isbn)
     {
         $response = Http::get("https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn");
         if ($response->successful()) {
-            $bookItem = $response->json('items.0'); // Pass the entire item
+            $bookItem = $response->json('items.0');
             return $this->formatBookDetails($bookItem);
         }
         return null;
     }
-    
 
     public function searchBooksByTitle($title)
     {
@@ -181,73 +182,71 @@ class BookHelper
     {
         $response = Http::get("https://www.googleapis.com/books/v1/volumes/{$bookId}");
         if ($response->successful()) {
-            $bookItem = $response->json(); // Pass the entire item
+            $bookItem = $response->json();
             return $this->formatBookDetails($bookItem);
         }
         return null;
     }
-    
 
-    public function getRecommendation(array $genres, $exclusionList)
+    public function getRecommendation(array $genres, $exclusionList, $userId, $startIndex = 0)
     {
-        $genreQuery = implode("|", array_map('urlencode', $genres)); // Ensure genres are URL-encoded properly
-        $query = "subject:{$genreQuery}&maxResults=40&orderBy=relevance";
-        Log::info("Query to Google Books API: " . $query);
-        $response = Http::get("https://www.googleapis.com/books/v1/volumes?q={$query}");
+        $user = User::find($userId);
+        $genreQuery = implode("|", array_map('urlencode', $genres));
+        $version = Cache::get('books_cache_version', 1); // Retrieve current version or default to 1
+        $cacheKey = "books_{$genreQuery}_{$startIndex}_{$version}"; // Use version in the cache key
     
-        if ($response->successful()) {
-            $books = $response->json('items');
-            if (!empty($books)) {
-                $books = array_filter($books, function ($book) use ($exclusionList) {
-                    $info = $book['volumeInfo'];
-                    $title = $info['title'] ?? '';
-                    $authors = implode(", ", $info['authors'] ?? []);
-                    $publishedDate = substr($info['publishedDate'] ?? '', 0, 4);
-                    $description = $info['description'] ?? null;
+        $books = Cache::get($cacheKey);
+        $retryCount = 0;
+        $retryLimit = 5; // Set the maximum number of retries to avoid infinite loops
     
-                    // Check if the book has an author and description
-                    if (empty($authors) || empty($description)) {
-                        return false;
-                    }
+        while (!$books && $retryCount < $retryLimit) {
+            $query = "subject:{$genreQuery}&startIndex={$startIndex}&maxResults=40";
+            $fullUrl = "https://www.googleapis.com/books/v1/volumes?q={$query}&langRestrict=en&orderBy=relevance";            
+            Log::info("Querying Google Books API: " . $fullUrl);
+            $response = Http::get($fullUrl);
     
-                    // Check if the book is in the exclusion list
-                    foreach ($exclusionList as $excluded) {
-                        if ($title === $excluded['title'] && $authors === $excluded['author'] && $publishedDate === $excluded['year']) {
-                            return false;
-                        }
-                    }
+            if ($response->successful()) {
+                $books = $response->json('items');
+                if (empty($books)) {
+                    $attemptNumber = $retryCount + 1;
+                    Log::info("No more books available at startIndex {$startIndex}, retrying... (Attempt {$attemptNumber} of {$retryLimit})");
+                    $user->last_book_index = 0;
+                    $user->save();
     
-                    return true;
-                });
+                    // Increment the version to invalidate old cache keys
+                    $newVersion = $version + 1;
+                    Cache::put('books_cache_version', $newVersion, 86400); // Store new version for a day
+                    Cache::forget($cacheKey); // Optionally clear the old cache immediately
     
-                if (!empty($books)) {
-                    $totalRatings = array_sum(array_map(function ($book) {
-                        return $book['volumeInfo']['ratingsCount'] ?? 0;
-                    }, $books));
-    
-                    if ($totalRatings > 0) {
-                        $weightedBooks = [];
-                        foreach ($books as $book) {
-                            $count = $book['volumeInfo']['ratingsCount'] ?? 0;
-                            $weight = $count / $totalRatings;
-                            for ($i = 0; $i < $weight * 100; ++$i) {
-                                $weightedBooks[] = $book;
-                            }
-                        }
-                        $selectedBook = $weightedBooks[array_rand($weightedBooks)];
-                    } else {
-                        $selectedBook = $books[array_rand($books)];
-                    }
-    
-                    $bookInfo = $selectedBook['volumeInfo'];
-                    $googleBookId = $selectedBook['id'];
-    
-                    return $this->formatBookDetails($bookInfo) + ['id' => $googleBookId];
+                    $startIndex = 0; // Reset startIndex for a new attempt
+                    $retryCount++; // Increment the retry counter
+                    continue; // Continue to the next iteration of the loop
+                } else {
+                    Cache::put($cacheKey, $books, 3600); // Cache the results for 1 hour
+                    break; // Exit the loop as books have been found
                 }
+            } else {
+                Log::error("Failed to fetch data from Google Books API: " . $response->body());
+                return null; // Exit if there is an API error
             }
         }
-        Log::error("Failed to fetch recommendations or no books found.");
-        return null;
+    
+        if ($retryCount >= $retryLimit) {
+            Log::error("Maximum retries reached, no books found.");
+            return null; // Exit the function if the retry limit is reached without success
+        }
+    
+        foreach ($books as $index => $book) {
+            if ($this->isBookValid($book, $exclusionList)) {
+                $user->last_book_index = $startIndex + $index; // Update last book index
+                $user->save();
+                return $this->formatBookDetails($book);
+            }
+        }
+    
+        // If no valid book is found and retry limit hasn't been reached, increment startIndex and try again
+        $startIndex += 40;
+        return $this->getRecommendation($genres, $exclusionList, $userId, $startIndex);
     }    
 
     public function saveToDatabase($bookDetails)
