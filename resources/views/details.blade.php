@@ -98,6 +98,6 @@
             </div>
         </div>
     </div>
-    <a href="{{ route('books') }}"><button type="button">Back</button></a>
+    <button type="button" onclick="window.history.back();">Back</button>
     <script src="{{ asset('js/books.js') }}"></script>
 @endsection

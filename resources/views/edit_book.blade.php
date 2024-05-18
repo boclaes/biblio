@@ -44,5 +44,5 @@
         <button type="submit">Update Book</button>
     </form>
 
-    <a href="{{ route('home') }}"><button type="button">Back</button></a>
+    <button type="button" onclick="window.history.back();">Back</button>
 @endsection
