@@ -24,8 +24,6 @@ class Book extends Model
         'reading',
         'done_reading',
     ];
-    
-    
 
     public function users()
     {
@@ -42,4 +40,5 @@ class Book extends Model
         return $this->hasOne(Borrowing::class);
     }
 }
+
 

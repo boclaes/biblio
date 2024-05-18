@@ -45,14 +45,23 @@ class BookController extends Controller
                 return redirect()->route('home')->with('error', 'Book not found or API request failed');
             }
     
+            // Ensure the 'title' key exists in the book details
+            if (!isset($bookDetails['title'])) {
+                return redirect()->route('home')->with('error', 'Book details are incomplete. Title is missing.');
+            }
+    
             try {
                 $user = Auth::user();
-                $existingBook = $user->books()->where('title', $bookDetails['title'])->first();
+                $existingBook = $user->books()
+                    ->where('title', $bookDetails['title'])
+                    ->where('google_books_id', $bookDetails['google_books_id'])
+                    ->first();
     
                 if ($existingBook) {
                     return redirect()->route('home')->with('error', 'This book is already in your collection');
                 }
     
+                // Ensure google_books_id is passed
                 $book = Book::create($bookDetails);
                 $user->books()->attach($book);
     
@@ -74,8 +83,8 @@ class BookController extends Controller
             $user = Auth::user();
             $userBooks = $user->books()->get();
     
-            // Create a mapping of titles to local IDs
-            $userBookMap = $userBooks->pluck('id', 'title')->toArray();
+            // Create a mapping of titles and google_books_id to local IDs
+            $userBookMap = $userBooks->pluck('id', 'google_books_id')->toArray();
     
             return view('selectBook', [
                 'books' => $books,
@@ -83,7 +92,7 @@ class BookController extends Controller
                 'query' => $query, // Pass the query back to the view
             ]);
         }
-    }
+    }    
     
     public function addBook(Request $request)
     {
@@ -100,6 +109,9 @@ class BookController extends Controller
             return redirect()->route('home')->with('error', 'Failed to fetch book details.');
         }
     
+        // Log book details to verify google_books_id is present
+        Log::info('Book details retrieved:', $bookDetails);
+    
         try {
             $user = Auth::user();
             $existingBook = $user->books()->where('title', $bookDetails['title'])->first();
@@ -109,6 +121,7 @@ class BookController extends Controller
                 return redirect()->route('home')->with('error', 'This book is already in your collection.');
             }
     
+            // Create a new book with the retrieved details
             $book = new Book($bookDetails);
             $book->save();
             $user->books()->attach($book);
@@ -122,7 +135,7 @@ class BookController extends Controller
             Log::error('Failed to add book: ' . $e->getMessage());
             return redirect()->route('home')->with('error', 'Failed to add book to your collection.');
         }
-    }
+    }    
     
     
     public function list()
@@ -465,7 +478,8 @@ class BookController extends Controller
 
     public function showAddBorrow()
     {
-        $books = Book::where('borrowed', 0)->get(); // Fetch only books that are not currently borrowed
+        $user = Auth::user();
+        $books = $user->books()->where('borrowed', 0)->get(); // Fetch only books that are not currently borrowed
         return view('add_borrow', compact('books'));
     }
     
@@ -476,25 +490,28 @@ class BookController extends Controller
             'borrower_name' => 'required|string',
             'borrowed_since' => 'required|date',
         ]);
-    
+
         $book = Book::findOrFail($request->book_id);
         $book->borrowed = true;
         $book->save();
-    
+
+        $user = Auth::user(); // Get the currently logged-in user
+
         $borrowing = new Borrowing([
             'book_id' => $request->book_id,
             'borrower_name' => $request->borrower_name,
             'borrowed_since' => $request->borrowed_since,
+            'user_id' => $user->id, // Set the user_id
         ]);
         $borrowing->save();
-    
+
         return redirect()->route('books')->with('success', 'Book borrowing recorded successfully.');
-    }    
+    } 
 
     public function showBorrowedBooks()
     {
-        // Fetch all borrowings with related book details
-        $borrowings = Borrowing::with('book')->get();
+        $user = Auth::user();
+        $borrowings = Borrowing::with('book')->where('user_id', $user->id)->get();
 
         return view('borrowed_books', compact('borrowings'));
     }

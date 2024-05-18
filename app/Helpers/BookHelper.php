@@ -127,8 +127,11 @@ class BookHelper
         return asset('images/default_cover.jpg'); // Fallback to default image
     }    
 
-    private function formatBookDetails($bookInfo)
+    private function formatBookDetails($bookItem)
     {
+        // Ensure we have volumeInfo
+        $bookInfo = $bookItem['volumeInfo'] ?? [];
+    
         if (!isset($bookInfo['title'])) {
             Log::error("Title not found in book information");
             return [
@@ -141,6 +144,7 @@ class BookHelper
         Log::info("Selected Cover Image for '{$title}': {$cover}");
     
         return [
+            'google_books_id' => $bookItem['id'] ?? null, // Extract Google Books ID from the book item
             'title' => $title,
             'author' => implode(", ", $bookInfo['authors'] ?? []),
             'year' => $bookInfo['publishedDate'] ?? null,
@@ -149,17 +153,20 @@ class BookHelper
             'genre' => $this->selectRelevantGenre($bookInfo['categories'] ?? []),
             'pages' => isset($bookInfo['pageCount']) && $bookInfo['pageCount'] > 0 ? $bookInfo['pageCount'] : 0,
         ];
-    }          
+    }
+    
+             
 
     public function getBookDetailsByISBN($isbn)
     {
         $response = Http::get("https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn");
         if ($response->successful()) {
-            $bookInfo = $response->json('items.0.volumeInfo');
-            return $this->formatBookDetails($bookInfo);
+            $bookItem = $response->json('items.0'); // Pass the entire item
+            return $this->formatBookDetails($bookItem);
         }
         return null;
     }
+    
 
     public function searchBooksByTitle($title)
     {
@@ -174,11 +181,12 @@ class BookHelper
     {
         $response = Http::get("https://www.googleapis.com/books/v1/volumes/{$bookId}");
         if ($response->successful()) {
-            $bookInfo = $response->json('volumeInfo');
-            return $this->formatBookDetails($bookInfo);
+            $bookItem = $response->json(); // Pass the entire item
+            return $this->formatBookDetails($bookItem);
         }
         return null;
     }
+    
 
     public function getRecommendation(array $genres, $exclusionList)
     {

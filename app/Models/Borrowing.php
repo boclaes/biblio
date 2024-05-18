@@ -10,7 +10,7 @@ class Borrowing extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['book_id', 'borrower_name', 'borrowed_since'];
+    protected $fillable = ['book_id', 'borrower_name', 'borrowed_since', 'user_id'];
 
     // Attributes that should be mutated to dates
     protected $dates = ['borrowed_since'];
@@ -18,6 +18,11 @@ class Borrowing extends Model
     public function book()
     {
         return $this->belongsTo(Book::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     // Optionally, you can add an accessor to ensure the date is always returned as a Carbon instance
