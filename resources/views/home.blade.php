@@ -21,7 +21,8 @@
         document.getElementById('searchInput').addEventListener('input', function(event) {
             const input = event.target.value;
             const searchTypeInput = document.getElementById('searchType');
-            if (input.length == 10 || input.length == 13 && !isNaN(input)) { // ISBN check
+            // Updated condition to correctly identify ISBN
+            if ((input.length === 10 || input.length === 13) && !isNaN(input)) {
                 searchTypeInput.value = 'isbn';
             } else {
                 searchTypeInput.value = 'title';

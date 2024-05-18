@@ -31,16 +31,13 @@
     </style>
 </head>
 <body>
-    <div id="book-recommendation" data-book='@json($book)' data-google-books-id="{{ $book['id'] }}">
-        @if($book)
-            @php
-                $cover = $book['cover'] ?? asset('images/default_cover.jpg');
-            @endphp
-            <img src="{{ $cover }}" alt="Cover Image">
-            <h2>{{ $book['title'] }}</h2>
-            <p>{{ $book['description'] }}</p>
-            <button onclick="handleDecision('accept', '{{ $book['id'] }}')">Accept</button>
-            <button onclick="handleDecision('reject', '{{ $book['id'] }}')">Reject</button>
+    <div id="book-recommendation" data-book='@json($book)' data-google-books-id="{{ $book['id'] ?? '' }}">
+        @if ($book)
+            <img src="{{ $book['cover'] ?? asset('images/default_cover.jpg') }}" alt="Cover Image of {{ $book['title'] ?? 'No Title' }}">
+            <h2>{{ $book['title'] ?? 'No Title' }}</h2>
+            <p>{{ $book['description'] ?? 'No description available.' }}</p>
+            <button onclick="handleDecision('accept', '{{ $book['id'] ?? '' }}')">Accept</button>
+            <button onclick="handleDecision('reject', '{{ $book['id'] ?? '' }}')">Reject</button>
         @else
             <p>No recommendations available at the moment.</p>
         @endif
