@@ -22,7 +22,7 @@ class LoginController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
     
-            return redirect()->intended(route('home'))->with('success', 'Login successful.');
+            return redirect()->intended(route('books'))->with('success', 'Login successful.');
         }
     
         return back()->withErrors(['email' => 'Invalid credentials.'])->withInput($request->only('email'));

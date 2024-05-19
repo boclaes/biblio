@@ -37,7 +37,7 @@ class BookController extends Controller
     public function search(Request $request)
     {
         $query = $request->input('query');
-        $searchType = $request->input('searchType');
+        $searchType = $request->input('searchType', 'title');
     
         // Validate search type
         if (!in_array($searchType, ['isbn', 'title'])) {
@@ -179,6 +179,7 @@ class BookController extends Controller
             'title' => 'required|string|max:255',
             'author' => 'required|string|max:255',
             'pages' => 'required|integer|min:1',
+            'place' => 'required|integer|min:0',
             'description' => 'required|string',
         ]);
 
@@ -192,6 +193,7 @@ class BookController extends Controller
         $book->title = $request->input('title');
         $book->author = $request->input('author');
         $book->pages = $request->input('pages');
+        $book->place = $request->input('place');
         $book->description = $request->input('description');
         $book->save();
 
@@ -557,5 +559,10 @@ class BookController extends Controller
         $book->save();
         $borrowing->delete();
         return redirect()->route('borrowed-books')->with('success', 'Book returned successfully!');
+    }
+
+    public function searchForm()
+    {
+        return view('search'); // This now points to what was previously home.blade.php
     }
 }

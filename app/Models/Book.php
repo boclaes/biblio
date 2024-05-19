@@ -23,6 +23,8 @@ class Book extends Model
         'want_to_read',
         'reading',
         'done_reading',
+        'borrowed',
+        'place'
     ];
 
     public function users()
