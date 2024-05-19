@@ -37,6 +37,11 @@
         </div>
 
         <div>
+            <label for="place">Place:</label>
+            <input type="number" id="place" name="place" value="{{ old('place', $book->place) }}" required>
+        </div>
+
+        <div>
             <label for="description">Description:</label>
             <textarea id="description" name="description" required>{{ old('description', $book->description) }}</textarea>
         </div>

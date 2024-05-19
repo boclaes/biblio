@@ -88,5 +88,5 @@
     </div>
     <a href="{{ route('borrowed-books') }}" class="btn btn-info"><button type="button">View Borrowed books</button></a>
     <a href="{{ route('books.addBorrow') }}" class="btn btn-info"><button type="button">Add Borrow</button></a>
-    <a href="{{ route('home') }}"><button type="button">Search books</button></a>
+    <a href="{{ route('search') }}"><button type="button">Search books</button></a>
 @endsection

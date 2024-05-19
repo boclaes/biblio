@@ -9,5 +9,7 @@
     <h1>Welcome to Book Scanner</h1>
     <a href="{{ route('register') }}">Register</a>
     <a href="{{ route('login') }}">Login</a>
+    <a href="{{ route('pricing') }}">Pricing</a>
+    <a href="{{ route('support') }}">Support</a>
 </body>
 </html>

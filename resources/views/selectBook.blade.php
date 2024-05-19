@@ -64,13 +64,13 @@
                         <button type="submit">Edit</button>
                     </form>
                 @else
-                    <form method="post" action="{{ route('addBook') }}">
-                        @csrf
-                        <input type="hidden" name="bookId" value="{{ $book['id'] }}">
-                        <input type="hidden" name="query" value="{{ request('query') }}">
-                        <input type="hidden" name="searchType" value="title">
-                        <button type="submit">Add to Library</button>
-                    </form>
+                <form method="post" action="{{ route('addBook') }}">
+                    @csrf
+                    <input type="hidden" name="bookId" value="{{ $book['id'] }}">
+                    <input type="hidden" name="query" value="{{ request('query') }}">
+                    <input type="hidden" name="searchType" value="title"> 
+                    <button type="submit">Add to Library</button>
+                </form>
                 @endif
             </div>
         </div>
@@ -78,6 +78,6 @@
         <p>No books found for your search query.</p>
     @endforelse
 
-    <a href="{{ route('home') }}"><button type="button">Back</button></a>
+    <a href="{{ route('search') }}"><button type="button">Back</button></a>
 </body>
 </html>
