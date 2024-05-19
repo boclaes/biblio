@@ -12,10 +12,18 @@ use App\Http\Controllers\Auth\AccountController;
 // Public Routes
 Route::get('/', function (Request $request) {
     if ($request->user()) {
-        return redirect()->route('home');
+        return redirect()->route('books');
     }
     return view('welcome');
 })->name('welcome');
+
+Route::get('/pricing', function () {
+    return view('pricing');
+})->name('pricing');
+
+Route::get('/support', function () {
+    return view('support');
+})->name('support');
 
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
@@ -32,7 +40,7 @@ Route::post('reset-password', [ResetPasswordController::class, 'reset'])->name('
 // Authenticated Routes
 Route::middleware(['auth'])->group(function () {
     // Home
-    Route::get('/home', [BookController::class, 'home'])->name('home');
+    Route::get('/books', [BookController::class, 'list'])->name('home');
 
     // Book Management
     Route::get('/books', [BookController::class, 'list'])->name('books');
@@ -41,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/search', [BookController::class, 'search'])->name('search');
     Route::post('/add-book', [BookController::class, 'addBook'])->name('addBook');
     Route::delete('/book/{id}', [BookController::class, 'delete'])->name('delete.book');
+    Route::get('/search', [BookController::class, 'searchForm'])->name('search');
 
     // Book Borrow
     Route::get('/books/add-borrow', [BookController::class, 'showAddBorrow'])->name('books.addBorrow');
