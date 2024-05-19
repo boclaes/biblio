@@ -28,6 +28,8 @@ class CreateBooksTable extends Migration
             $table->boolean('want_to_read')->default(false);
             $table->boolean('reading')->default(false);
             $table->boolean('done_reading')->default(false);
+            $table->boolean('borrowed')->default(false);
+            $table->integer('place')->default(0);
             $table->timestamps();
         });
     }
