@@ -107,18 +107,21 @@ class BookController extends Controller
 
         if (!$bookDetails) {
             Log::error('Book details not found for ID: ' . $bookId);
-            return redirect()->route('search')->with('error', 'Failed to fetch book details.');
+            return redirect()->route('search.form')->with('error', 'Failed to fetch book details.');
         }
 
         Log::info('Book details retrieved:', $bookDetails);
 
         try {
             $user = Auth::user();
-            $existingBook = $user->books()->where('title', $bookDetails['title'])->first();
+            $existingBook = $user->books()
+            ->where('title', $bookDetails['title'])
+            ->where('google_books_id', $bookDetails['google_books_id'])
+            ->first();
 
             if ($existingBook) {
-                Log::warning('Attempt to add duplicate book: ' . $bookDetails['title']);
-                return redirect()->route('search')->with('error', 'This book is already in your collection.');
+                Log::warning('Attempt to add duplicate book: ' . $bookDetails['title'] . ' (Google Books ID: ' . $bookDetails['google_books_id'] . ')');
+                return redirect()->route('search.form')->with('error', 'This book is already in your collection.');
             }
 
             $book = new Book($bookDetails);
@@ -239,7 +242,7 @@ class BookController extends Controller
         $book = $user->books()->find($id);
 
         if (!$book) {
-            return redirect()->route('books')->with('error', 'Book not found.');
+            return redirect()->route('books');
         }
 
         return view('details', compact('book'));
