@@ -41,18 +41,18 @@ class BookController extends Controller
     
         // Validate search type
         if (!in_array($searchType, ['isbn', 'title'])) {
-            return redirect()->route('home')->with('error', 'Invalid search type specified.');
+            return redirect()->route('search')->with('error', 'Invalid search type specified.');
         }
     
         if ($searchType === 'isbn') {
             $bookDetails = $this->bookHelper->getBookDetailsByISBN($query);
     
             if (!$bookDetails) {
-                return redirect()->route('home')->with('error', 'Book not found or API request failed');
+                return redirect()->route('search')->with('error', 'Book not found or API request failed');
             }
     
             if (!isset($bookDetails['title'])) {
-                return redirect()->route('home')->with('error', 'Book details are incomplete. Title is missing.');
+                return redirect()->route('search')->with('error', 'Book details are incomplete. Title is missing.');
             }
     
             try {
@@ -63,21 +63,21 @@ class BookController extends Controller
                     ->first();
     
                 if ($existingBook) {
-                    return redirect()->route('home')->with('error', 'This book is already in your collection');
+                    return redirect()->route('search')->with('error', 'This book is already in your collection');
                 }
     
                 $book = Book::create($bookDetails);
                 $user->books()->attach($book);
     
-                return redirect()->route('home')->with('success', 'Book saved to your library');
+                return redirect()->route('search')->with('success', 'Book saved to your library');
             } catch (ModelNotFoundException $exception) {
-                return redirect()->route('home')->with('error', 'Failed to add book to your collection');
+                return redirect()->route('search')->with('error', 'Failed to add book to your collection');
             }
         } else {
             $books = $this->bookHelper->searchBooksByTitle($query);
     
             if (empty($books)) {
-                return redirect()->route('home')->with('error', 'No books found with that title');
+                return redirect()->route('search')->with('error', 'No books found with that title');
             }
     
             $books = array_slice($books, 0, 5);
@@ -107,7 +107,7 @@ class BookController extends Controller
 
         if (!$bookDetails) {
             Log::error('Book details not found for ID: ' . $bookId);
-            return redirect()->route('home')->with('error', 'Failed to fetch book details.');
+            return redirect()->route('search')->with('error', 'Failed to fetch book details.');
         }
 
         Log::info('Book details retrieved:', $bookDetails);
@@ -118,7 +118,7 @@ class BookController extends Controller
 
             if ($existingBook) {
                 Log::warning('Attempt to add duplicate book: ' . $bookDetails['title']);
-                return redirect()->route('home')->with('error', 'This book is already in your collection.');
+                return redirect()->route('search')->with('error', 'This book is already in your collection.');
             }
 
             $book = new Book($bookDetails);
@@ -128,11 +128,11 @@ class BookController extends Controller
             if ($searchType === 'title') {
                 return redirect()->route('search', ['query' => $query])->with('success', 'Book added to your library successfully.');
             } else {
-                return redirect()->route('home')->with('success', 'Book added to your library successfully.');
+                return redirect()->route('search')->with('success', 'Book added to your library successfully.');
             }
         } catch (\Exception $e) {
             Log::error('Failed to add book: ' . $e->getMessage());
-            return redirect()->route('home')->with('error', 'Failed to add book to your collection.');
+            return redirect()->route('search')->with('error', 'Failed to add book to your collection.');
         }
     }
 
@@ -166,7 +166,7 @@ class BookController extends Controller
         $book = $user->books()->find($id);
 
         if (!$book) {
-            return redirect()->route('home')->with('error', 'You do not have permission to edit this book.');
+            return redirect()->route('books')->with('error', 'You do not have permission to edit this book.');
         }
 
         $query = $request->input('query');
@@ -187,7 +187,7 @@ class BookController extends Controller
         $book = $user->books()->find($id);
 
         if (!$book) {
-            return redirect()->route('home')->with('error', 'You do not have permission to edit this book.');
+            return redirect()->route('books')->with('error', 'You do not have permission to edit this book.');
         }
 
         $book->title = $request->input('title');
@@ -239,7 +239,7 @@ class BookController extends Controller
         $book = $user->books()->find($id);
 
         if (!$book) {
-            return redirect()->route('home')->with('error', 'Book not found.');
+            return redirect()->route('books')->with('error', 'Book not found.');
         }
 
         return view('details', compact('book'));
@@ -251,7 +251,7 @@ class BookController extends Controller
         $book = $user->books()->find($id);
 
         if (!$book) {
-            return redirect()->route('home')->with('error', 'You do not have permission to edit this book.');
+            return redirect()->route('books')->with('error', 'You do not have permission to edit this book.');
         }
 
         return view('edit_notes', compact('book'));
@@ -263,7 +263,7 @@ class BookController extends Controller
         $book = $user->books()->find($id);
 
         if (!$book) {
-            return redirect()->route('home')->with('error', 'You do not have permission to edit this book.');
+            return redirect()->route('books')->with('error', 'You do not have permission to edit this book.');
         }
 
         return view('edit_review', compact('book'));
@@ -367,7 +367,7 @@ class BookController extends Controller
         $topGenre = $this->calculateTopGenre($user->id);
         
         if (!$topGenre) {
-            return redirect()->route('home')->with('error', 'No favorite genres found. Add some books to get recommendations!');
+            return redirect()->route('books')->with('error', 'No favorite genres found. Add some books to get recommendations!');
         }
     
         Log::info("Top genre being queried: " . $topGenre);
@@ -376,7 +376,7 @@ class BookController extends Controller
         $book = $this->bookHelper->getRecommendation([$topGenre], $exclusionList, $user->id, $startIndex);
     
         if (!$book) {
-            return redirect()->route('home')->with('error', 'No recommendations found for your favorite genres.');
+            return redirect()->route('books')->with('error', 'No recommendations found for your favorite genres.');
         }
     
         return view('recommendation', compact('book'));
