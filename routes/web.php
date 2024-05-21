@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\MQTT\MqttController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -49,7 +50,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/search', [BookController::class, 'search'])->name('search');
     Route::post('/add-book', [BookController::class, 'addBook'])->name('addBook');
     Route::delete('/book/{id}', [BookController::class, 'delete'])->name('delete.book');
-    Route::get('/search', [BookController::class, 'searchForm'])->name('search');
+    Route::get('/searchform', [BookController::class, 'searchForm'])->name('search.form');
 
     // Book Borrow
     Route::get('/books/add-borrow', [BookController::class, 'showAddBorrow'])->name('books.addBorrow');
@@ -82,7 +83,14 @@ Route::middleware(['auth'])->group(function () {
     // Fetch Books
     Route::get('/fetch-books', [BookController::class, 'recommendBook'])->name('fetch-books');
 
+    // MQTT
+    Route::post('/register-rpi', [MqttController::class, 'registerRPI'])->name('register-rpi');
+    Route::post('/show-book/{id}', [MqttController::class, 'showBook'])->name('show.book');
 });
+
+// Sanctum-protected API route
+Route::middleware('auth:sanctum')->post('/api/register-rpi', [MqttController::class, 'apiRegisterRPI']);
+
 
 Route::group(['middleware' => 'auth', 'prefix' => 'account'], function () {
     Route::get('settings', [AccountController::class, 'showSettings'])->name('account.settings');

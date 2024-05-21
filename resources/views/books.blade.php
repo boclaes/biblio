@@ -77,6 +77,10 @@
                     @method('DELETE')
                     <button type="submit">Delete</button>
                 </form>
+                <form action="{{ route('show.book', $book->id) }}" method="POST">
+                    @csrf
+                    <button type="submit">Show Book</button>
+                </form>
             </div>
         @endforeach
     </div>
@@ -86,7 +90,11 @@
     <div class="navigation-buttons">
         <a href="{{ route('accepted.books') }}" class="recommendation-button"><button type="button">Wishlist</button></a>
     </div>
+    <form action="{{ route('register-rpi') }}" method="POST">
+        @csrf
+        <button type="submit">Register RPI</button>
+    </form>
     <a href="{{ route('borrowed-books') }}" class="btn btn-info"><button type="button">View Borrowed books</button></a>
     <a href="{{ route('books.addBorrow') }}" class="btn btn-info"><button type="button">Add Borrow</button></a>
-    <a href="{{ route('search') }}"><button type="button">Search books</button></a>
+    <a href="{{ route('search.form') }}"><button type="button">Search books</button></a>
 @endsection

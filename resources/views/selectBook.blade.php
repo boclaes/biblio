@@ -78,6 +78,6 @@
         <p>No books found for your search query.</p>
     @endforelse
 
-    <a href="{{ route('search') }}"><button type="button">Back</button></a>
+    <a href="{{ route('search.form') }}"><button type="button">Back</button></a>
 </body>
 </html>
