@@ -59,6 +59,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
                 break;
+            case 'date_asc':
+                books.sort((a, b) => {
+                    const dateA = new Date(a.querySelector('.borrowed-since').textContent);
+                    const dateB = new Date(b.querySelector('.borrowed-since').textContent);
+                    return dateA - dateB;
+                });
+                break;
+            case 'date_desc':
+                books.sort((a, b) => {
+                    const dateA = new Date(a.querySelector('.borrowed-since').textContent);
+                    const dateB = new Date(b.querySelector('.borrowed-since').textContent);
+                    return dateB - dateA;
+                });
+                break;
         }
 
         // Reorder books in the container
