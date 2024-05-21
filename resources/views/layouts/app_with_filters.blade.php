@@ -69,20 +69,34 @@
     <div class="dropdown">
         <label for="sort">Sort By:</label>
         <select id="sort">
-            <option value="name_asc">Name (A-Z)</option>
-            <option value="name_desc">Name (Z-A)</option>
-            @isset($includeRatings)
-                @if ($includeRatings)
-                    <option value="rating_asc">Rating (Lowest First)</option>
-                    <option value="rating_desc">Rating (Highest First)</option>
-                @endif
-            @endisset
-            <option value="author">Author (A-Z)</option>
-            @isset($includePages)
-                @if ($includePages)
-                    <option value="pages">Pages</option>
-                @endif
-            @endisset
+        @isset($includeName)
+            @if ($includeName)
+                <option value="name_asc">Name (A-Z)</option>
+                <option value="name_desc">Name (Z-A)</option>
+            @endif
+        @endisset
+        @isset($includeRatings)
+            @if ($includeRatings)
+                <option value="rating_asc">Rating (Lowest First)</option>
+                <option value="rating_desc">Rating (Highest First)</option>
+            @endif
+        @endisset
+        @isset($includeAuthor)
+            @if ($includeAuthor)
+                <option value="author">Author (A-Z)</option>
+            @endif
+        @endisset
+        @isset($includePages)
+            @if ($includePages)
+                <option value="pages">Pages</option>
+            @endif
+        @endisset
+        @isset($includeDate)
+            @if ($includeDate)
+                <option value="date_asc">Date (Oldest First)</option>
+                <option value="date_desc">Date (Newest First)</option>
+            @endif
+        @endisset
         </select>
     </div>
     <div>

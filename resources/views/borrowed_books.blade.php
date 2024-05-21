@@ -1,4 +1,4 @@
-@extends('layouts.app_with_filters', ['includeRatings' => false, 'includePages' => false])
+@extends('layouts.app_with_filters', ['includeRatings' => false, 'includePages' => false, 'includeName' => false, 'includeAuthor' => false, 'includeDate' => true  ])
 
 @section('title', 'Borrowed Books')
 
@@ -36,7 +36,7 @@
                     <h3>{{ $borrowing->book->title }}</h3>
                     <p class="author">By: {{ $borrowing->book->author }}</p>
                     <p>Borrowed by: {{ $borrowing->borrower_name }}</p>
-                    <p>Borrowed on: {{ $borrowing->borrowed_since->format('Y-m-d') }}</p>
+                    <p class="borrowed-since">Borrowed on: {{ $borrowing->borrowed_since->format('Y-m-d') }}</p>
                     <form action="{{ route('borrowings.return', $borrowing->id) }}" method="POST" style="display: inline;">
                         @csrf
                         @method('DELETE')

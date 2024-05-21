@@ -1,4 +1,4 @@
-@extends('layouts.app_with_filters', ['includeRatings' => true, 'includePages' => true])
+@extends('layouts.app_with_filters', ['includeRatings' => true, 'includePages' => true, 'includeName' => true, 'includeAuthor' => true ])
 
 @section('title', 'Simple Book List')
 
@@ -72,11 +72,6 @@
                     <p>No Cover Image</p>
                 @endif
                 <a href="{{ route('edit.book', $book->id) }}">Edit Book</a> <!-- New Edit Book button -->
-                <form action="{{ route('delete.book', $book->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this book?');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit">Delete</button>
-                </form>
                 <form action="{{ route('show.book', $book->id) }}" method="POST">
                     @csrf
                     <button type="submit">Show Book</button>

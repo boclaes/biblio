@@ -1,4 +1,4 @@
-@extends('layouts.app_with_filters', ['includeRatings' => false, 'includePages' => true])
+@extends('layouts.app_with_filters', ['includeRatings' => false, 'includePages' => true, 'includeName' => true, 'includeAuthor' => true ])
 
 @section('title', 'Accepted Books')
 
