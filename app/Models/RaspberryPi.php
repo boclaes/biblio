@@ -10,7 +10,7 @@ class RaspberryPi extends Model
     protected $table = 'raspberry_pis';
 
     protected $fillable = [
-        'user_id', 'location_id', 'unique_identifier'
+        'user_id', 'location_id', 'unique_identifier', 'ip_address'
     ];
 
     // Relationship with User model
