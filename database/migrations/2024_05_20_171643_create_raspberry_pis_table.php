@@ -18,6 +18,7 @@ class CreateRaspberryPisTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->integer('location_id');
             $table->string('unique_identifier');
+            $table->string('ip_address'); // Adding the ip_address column
             $table->timestamps();
 
             // Define foreign key constraint
