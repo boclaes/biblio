@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\BookHelper;
 use App\Models\Book;
-use App\Models\Reviews;
+use App\Models\Review;
 use App\Models\RejectedBook;
 use App\Models\Borrowing;
 use App\Models\AcceptedBook;
@@ -277,25 +277,34 @@ class BookController extends Controller
         $request->validate([
             'rating' => 'required|integer|min:1|max:5',
         ]);
-
-        Log::info('Incoming rating data:', [
+    
+        $logData = [
             'rating' => $request->rating,
             'user_id' => auth()->id(),
             'book_id' => $bookId,
-        ]);
-
+            'timestamp' => now()->toDateTimeString(),
+        ];
+    
+        $logFile = storage_path('logs/custom.log');
+        file_put_contents($logFile, json_encode($logData) . PHP_EOL, FILE_APPEND);
+    
         try {
-            $review = Reviews::updateOrCreate(
+            $review = Review::updateOrCreate(
                 ['user_id' => auth()->id(), 'book_id' => $bookId],
                 ['rating' => $request->rating]
             );
-
+    
             return response()->json(['message' => 'Book rated successfully', 'review' => $review], 200);
         } catch (\Exception $e) {
-            Log::error('Error rating book: ' . $e->getMessage());
+            $errorLogData = [
+                'error' => $e->getMessage(),
+                'timestamp' => now()->toDateTimeString(),
+            ];
+            file_put_contents($logFile, json_encode($errorLogData) . PHP_EOL, FILE_APPEND);
+    
             return response()->json(['error' => 'Internal Server Error'], 500);
         }
-    }
+    }    
 
     public function getBookRating($id)
     {
