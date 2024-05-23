@@ -4,9 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const bookId = bookDetails.getAttribute('data-book-id');
     const token = bookDetails.getAttribute('data-csrf-token');
 
+    console.log('Document loaded. Book ID:', bookId, 'CSRF Token:', token);
+
     stars.forEach(star => {
         star.addEventListener('click', () => {
             const rating = parseInt(star.getAttribute('data-value'));
+            console.log('Star clicked. Rating:', rating);
+
             fetch("/books/" + bookId + "/rate", {
                 method: 'POST',
                 headers: {
@@ -18,20 +22,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             })
             .then(response => {
+                console.log('Fetch response received. Status:', response.status);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('Rating response:', data);
+                console.log('Rating response data:', data);
                 stars.forEach(s => {
                     const sValue = parseInt(s.getAttribute('data-value'));
                     s.classList.toggle('active', sValue <= rating);
                 });
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Fetch error:', error);
             });
         });
     });
@@ -43,10 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const bookId = bookDetails.getAttribute('data-book-id');
     const token = bookDetails.getAttribute('data-csrf-token');
 
+    console.log('Document loaded. Book ID:', bookId, 'CSRF Token:', token);
+
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', () => {
             const field = checkbox.id;
             const value = checkbox.checked ? 1 : 0;
+            console.log('Checkbox changed. Field:', field, 'Value:', value);
+
             const data = { [field]: value };
 
             checkboxes.forEach(cb => {
@@ -55,6 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     data[cb.id] = 0;
                 }
             });
+
+            console.log('Data to be sent:', data);
 
             fetch(`/books/${bookId}/update-status`, {
                 method: 'POST',
@@ -65,25 +76,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(data)
             })
             .then(response => {
+                console.log('Fetch response received. Status:', response.status);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('Status updated:', data);
+                console.log('Status update response data:', data);
                 // Update the book object with the new data
                 Object.assign(bookDetails, data.book);
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Fetch error:', error);
             });
         });
     });
 });
-
-
-
-
-
-
