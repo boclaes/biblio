@@ -22,21 +22,31 @@ class RegisterController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
         ]);
-
+    
+        if (User::where('email', $request->email)->exists()) {
+            logger()->info('Email already exists in the database.');
+            Auth::logout();
+            $request->session()->invalidate();
+            return back()->withInput()->withErrors(['email' => 'The email address is already in use. Please use a different email address.']);
+        }
+    
         try {
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
             ]);
-
-            // Log the user in
-            Auth::login($user);
     
-            return redirect()->route('home')->with('success', 'Registration successful. Welcome!');
+            Auth::login($user);
+            logger()->info('User registration and login successful.');
+    
+            return redirect()->route('books')->with('success', 'Registration successful. Welcome!');
         } catch (\Exception $e) {
             logger()->error('Registration failed: ' . $e->getMessage());
-            return back()->withInput()->withErrors(['email' => 'The email address is already in use. Please use a different email address.']);
+            // Logout and clear session here in case of an exception
+            Auth::logout();
+            $request->session()->invalidate();
+            return back()->withInput()->withErrors(['email' => 'Registration error occurred.']);
         }
-    }
+    }    
 }

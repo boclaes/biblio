@@ -76,10 +76,6 @@ class BookController extends Controller
         } else {
             $books = $this->bookHelper->searchBooksByTitle($query);
     
-            if (empty($books)) {
-                return redirect()->route('search')->with('error', 'No books found with that title');
-            }
-    
             $books = array_slice($books, 0, 5);
     
             $user = Auth::user();
@@ -247,6 +243,19 @@ class BookController extends Controller
 
         return view('details', compact('book'));
     }
+
+    public function showDetailsSearch($id) {
+        $user = Auth::user();
+        $book = $user->books()->find($id);
+    
+        if (!$book) {
+            return redirect()->route('books');
+        }
+    
+        $query = request('query', '');
+        return view('detailsSearch', ['book' => $book, 'query' => $query]);
+    }
+    
 
     public function editNotes($id)
     {
