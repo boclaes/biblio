@@ -46,6 +46,7 @@ Route::middleware(['auth'])->group(function () {
     // Book Management
     Route::get('/books', [BookController::class, 'list'])->name('books');
     Route::get('/books/{id}/details', [BookController::class, 'showDetails'])->name('details.book');
+    Route::get('/books/{id}/detailsSearch', [BookController::class, 'showDetailsSearch'])->name('details.book.search');
     Route::post('/search', [BookController::class, 'search'])->name('search');
     Route::get('/search', [BookController::class, 'search'])->name('search');
     Route::post('/add-book', [BookController::class, 'addBook'])->name('addBook');
