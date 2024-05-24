@@ -27,5 +27,6 @@
     </form>
     <a href="{{ route('password.request') }}">Forgot Password?</a>
     <a href="{{ route('welcome') }}"><button type="button">Back</button></a>
+    <a href="{{ route('register') }}"><button type="button">registration</button></a>
 </body>
 </html>

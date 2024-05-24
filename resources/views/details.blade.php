@@ -103,7 +103,6 @@
             </div>
         </div>
     </div>
-    <button type="button" onclick="window.history.back();">Back to search</button>
     <a href="{{ route('books') }}"><button type="button">Back to library</button></a>
     <script src="{{ asset('js/books.js') }}"></script>
 @endsection

@@ -31,6 +31,7 @@
 
         <button type="submit">Register</button>
     </form>
-    <a href="{{ route('welcome') }}"><button type="button">Back</button></a>
+    <a href="{{ route('welcome') }}">Back</a>
+    <a href="{{ route('login') }}">Login</a>
 </body>
 </html>

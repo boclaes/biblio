@@ -33,7 +33,7 @@
             @endphp
 
             @if (array_key_exists($googleBooksId, $userBookMap))
-                <a href="{{ route('details.book', $userBookMap[$googleBooksId]) }}">
+                <a href="{{ route('details.book.search', $userBookMap[$googleBooksId]) }}">
                     <img src="{{ $book['volumeInfo']['imageLinks']['thumbnail'] ?? asset('images/default_cover.jpg') }}" alt="Cover Image" class="book-image book-image-hover" style="height: 100px; vertical-align: middle; margin-right: 10px;">
                 </a>
             @else

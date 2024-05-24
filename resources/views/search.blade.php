@@ -15,7 +15,7 @@
     
     <script>
         window.onload = function() {
-            document.getElementById('searchInput').focus();
+            document.getElementById('searchInput').focus();A
         };
 
         document.getElementById('searchInput').addEventListener('input', function(event) {
