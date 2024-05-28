@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\MQTT\MqttController;
+use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -84,13 +84,15 @@ Route::middleware(['auth'])->group(function () {
     // Fetch Books
     Route::get('/fetch-books', [BookController::class, 'recommendBook'])->name('fetch-books');
 
-    // MQTT
-    Route::post('/register-rpi', [MqttController::class, 'registerRPI'])->name('register-rpi');
-    Route::post('/show-book/{id}', [MqttController::class, 'showBook'])->name('show.book');
+    // Web routes
+    Route::post('/register-rpi', [ApiController::class, 'registerRPI'])->name('register-rpi');
+    Route::post('/show-book/{id}', [ApiController::class, 'showBook'])->name('show.book');
+
 });
 
 // Sanctum-protected API route
-Route::middleware('auth:sanctum')->post('/api/register-rpi', [MqttController::class, 'apiRegisterRPI']);
+Route::middleware('auth:sanctum')->post('/api/register-rpi', [ApiController::class, 'registerRPI']);
+
 
 
 Route::group(['middleware' => 'auth', 'prefix' => 'account'], function () {
