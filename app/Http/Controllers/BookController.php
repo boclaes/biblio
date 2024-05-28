@@ -357,9 +357,9 @@ class BookController extends Controller
             $genres = explode(' / ', $book->genre);
             Log::info("Processing book ID: {$book->id}, genres: " . json_encode($genres));
             
-            // Check if it is a single genre and skip if it is just "Fiction"
-            if (count($genres) === 1 && trim($genres[0]) === 'Fiction') {
-                Log::info("Skipping genre 'Fiction'");
+            // Check if it is a single genre and skip if it is just "Fiction or General"
+            if (count($genres) === 1 && (trim($genres[0]) === 'Fiction' || trim($genres[0]) === 'General')) {
+                Log::info("Skipping genre '" . $genres[0] . "'");
                 continue;
             }
             

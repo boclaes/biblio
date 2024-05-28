@@ -10,21 +10,7 @@ class Book extends Model
     use HasFactory;
 
     protected $fillable = [
-        'google_books_id',
-        'title',
-        'author',
-        'year',
-        'description',
-        'cover',
-        'genre',
-        'pages',
-        'notes_user',
-        'review',
-        'want_to_read',
-        'reading',
-        'done_reading',
-        'borrowed',
-        'place'
+        'google_books_id', 'title', 'author', 'year', 'description', 'cover', 'genre', 'pages', 'notes_user', 'review', 'want_to_read', 'reading', 'done_reading', 'borrowed', 'place'
     ];
 
     public function users()
