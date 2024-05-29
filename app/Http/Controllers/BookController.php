@@ -49,7 +49,7 @@ class BookController extends Controller
         } else {
             return $this->searchByTitle($query);
         }
-    }
+    }    
     
     
     private function searchByISBN($isbn)
@@ -59,12 +59,12 @@ class BookController extends Controller
     
         if (!$bookDetails) {
             Log::error("Book not found or API request failed for ISBN: {$isbn}");
-            return redirect()->route('search')->with('error', 'Book not found or API request failed');
+            return redirect()->route('books')->with('error', 'Book not found or API request failed');
         }
     
         if (!isset($bookDetails['title'])) {
             Log::error("Book details are incomplete. Title is missing for ISBN: {$isbn}");
-            return redirect()->route('search')->with('error', 'Book details are incomplete. Title is missing.');
+            return redirect()->route('books')->with('error', 'Book details are incomplete. Title is missing.');
         }
     
         try {
@@ -76,7 +76,7 @@ class BookController extends Controller
     
             if ($existingBook) {
                 Log::info("Book already in collection: {$bookDetails['title']}");
-                return redirect()->route('search')->with('error', 'This book is already in your collection');
+                return redirect()->route('books')->with('error', 'This book is already in your collection');
             }
     
             $book = Book::create($bookDetails);
@@ -86,7 +86,7 @@ class BookController extends Controller
             return redirect()->route('books')->with('success', 'Book saved to your library');
         } catch (Exception $exception) {
             Log::error("Failed to add book to collection: " . $exception->getMessage());
-            return redirect()->route('search')->with('error', 'Failed to add book to your collection');
+            return redirect()->route('books')->with('error', 'Failed to add book to your collection');
         }
     }
     
