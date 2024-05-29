@@ -47,7 +47,7 @@ class ApiController extends Controller
                 return redirect('/books')->with('status', 'Registration successful and Raspberry Pi registered successfully!');
             } catch (\Exception $e) {
                 Log::error('Failed to insert Raspberry Pi data into the database', ['error' => $e->getMessage(), 'data' => $validatedData]);
-                return redirect('/books')->with('status', 'Succeeded to register Raspberry Pi.');
+                return redirect('/books')->with('status', 'failed to register Raspberry Pi.');
             }
         }
 

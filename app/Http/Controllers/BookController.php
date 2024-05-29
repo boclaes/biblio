@@ -45,51 +45,81 @@ class BookController extends Controller
         }
     
         if ($searchType === 'isbn') {
-            $bookDetails = $this->bookHelper->getBookDetailsByISBN($query);
-    
-            if (!$bookDetails) {
-                return redirect()->route('search')->with('error', 'Book not found or API request failed');
-            }
-    
-            if (!isset($bookDetails['title'])) {
-                return redirect()->route('search')->with('error', 'Book details are incomplete. Title is missing.');
-            }
-    
-            try {
-                $user = Auth::user();
-                $existingBook = $user->books()
-                    ->where('title', $bookDetails['title'])
-                    ->where('google_books_id', $bookDetails['google_books_id'])
-                    ->first();
-    
-                if ($existingBook) {
-                    return redirect()->route('search')->with('error', 'This book is already in your collection');
-                }
-    
-                $book = Book::create($bookDetails);
-                $user->books()->attach($book);
-    
-                return redirect()->route('search')->with('success', 'Book saved to your library');
-            } catch (ModelNotFoundException $exception) {
-                return redirect()->route('search')->with('error', 'Failed to add book to your collection');
-            }
+            return $this->searchByISBN($query);
         } else {
-            $books = $this->bookHelper->searchBooksByTitle($query);
-    
-            $books = array_slice($books, 0, 5);
-    
-            $user = Auth::user();
-            $userBooks = $user->books()->get();
-    
-            $userBookMap = $userBooks->pluck('id', 'google_books_id')->toArray();
-    
-            return view('selectBook', [
-                'books' => $books,
-                'userBookMap' => $userBookMap,
-                'query' => $query,
-            ]);
+            return $this->searchByTitle($query);
         }
-    }    
+    }
+    
+    
+    private function searchByISBN($isbn)
+    {
+        Log::info("Searching for book with ISBN: {$isbn}");
+        $bookDetails = $this->bookHelper->getBookDetailsByISBN($isbn);
+    
+        if (!$bookDetails) {
+            Log::error("Book not found or API request failed for ISBN: {$isbn}");
+            return redirect()->route('search')->with('error', 'Book not found or API request failed');
+        }
+    
+        if (!isset($bookDetails['title'])) {
+            Log::error("Book details are incomplete. Title is missing for ISBN: {$isbn}");
+            return redirect()->route('search')->with('error', 'Book details are incomplete. Title is missing.');
+        }
+    
+        try {
+            $user = Auth::user();
+            $existingBook = $user->books()
+                ->where('title', $bookDetails['title'])
+                ->where('google_books_id', $bookDetails['google_books_id'])
+                ->first();
+    
+            if ($existingBook) {
+                Log::info("Book already in collection: {$bookDetails['title']}");
+                return redirect()->route('search')->with('error', 'This book is already in your collection');
+            }
+    
+            $book = Book::create($bookDetails);
+            $user->books()->attach($book);
+    
+            Log::info("Book saved to library: {$bookDetails['title']}");
+            return redirect()->route('books')->with('success', 'Book saved to your library');
+        } catch (Exception $exception) {
+            Log::error("Failed to add book to collection: " . $exception->getMessage());
+            return redirect()->route('search')->with('error', 'Failed to add book to your collection');
+        }
+    }
+    
+    
+    private function searchByTitle($title)
+    {
+        if (empty($title)) {
+            Log::error("Search query is empty for title search.");
+            return redirect()->route('search')->with('error', 'Search query cannot be empty.');
+        }
+    
+        Log::info("Searching for books with title: {$title}");
+        $books = $this->bookHelper->searchBooksByTitle($title);
+    
+        if (empty($books)) {
+            return redirect()->route('search')->with('error', 'No books found for the given title.');
+        }
+    
+        $books = array_slice($books, 0, 5);
+    
+        $user = Auth::user();
+        $userBooks = $user->books()->get();
+    
+        $userBookMap = $userBooks->pluck('id', 'google_books_id')->toArray();
+    
+        return view('selectBook', [
+            'books' => $books,
+            'userBookMap' => $userBookMap,
+            'query' => $title,
+        ]);
+    }
+    
+     
 
     public function addBook(Request $request)
     {

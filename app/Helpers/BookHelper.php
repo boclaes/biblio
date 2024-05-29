@@ -161,13 +161,23 @@ class BookHelper
 
     public function getBookDetailsByISBN($isbn)
     {
+        Log::info("Fetching book details for ISBN: {$isbn}");
         $response = Http::get("https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn");
+    
         if ($response->successful()) {
             $bookItem = $response->json('items.0');
-            return $this->formatBookDetails($bookItem);
+            if ($bookItem) {
+                Log::info("Book details retrieved successfully for ISBN: {$isbn}");
+                return $this->formatBookDetails($bookItem);
+            } else {
+                Log::error("No book items found in API response for ISBN: {$isbn}");
+            }
+        } else {
+            Log::error("Failed to fetch data from Google Books API for ISBN: {$isbn}. Response: " . $response->body());
         }
         return null;
     }
+    
 
     public function searchBooksByTitle($title)
     {
