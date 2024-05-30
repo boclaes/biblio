@@ -93,3 +93,4 @@
     <a href="{{ route('books.addBorrow') }}" class="btn btn-info"><button type="button">Add Borrow</button></a>
     <a href="{{ route('search.form') }}"><button type="button">Search books</button></a>
 @endsection
+@include('layouts.footer')

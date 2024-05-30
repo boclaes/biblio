@@ -23,3 +23,4 @@
     <a href="{{ route('welcome') }}"><button type="button">Back</button></a>
 </body>
 </html>
+@include('layouts.footer')

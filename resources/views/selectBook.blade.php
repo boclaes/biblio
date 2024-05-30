@@ -81,3 +81,4 @@
     <a href="{{ route('search.form') }}"><button type="button">Back</button></a>
 </body>
 </html>
+@include('layouts.footer')

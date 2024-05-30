@@ -106,3 +106,4 @@
     <a href="{{ route('search.form')}}">back</a>
     <script src="{{ asset('js/books.js') }}"></script>
 @endsection
+@include('layouts.footer')

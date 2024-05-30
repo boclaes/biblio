@@ -109,7 +109,5 @@
     </div>
 
     @yield('content')
-
-    <script src="{{ asset('js/sorting.js') }}"></script>
 </body>
 </html>

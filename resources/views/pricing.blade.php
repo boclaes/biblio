@@ -11,3 +11,4 @@
     <a href="{{ route('welcome') }}">Back to Home</a>
 </body>
 </html>
+@include('layouts.footer')

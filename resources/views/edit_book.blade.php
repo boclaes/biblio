@@ -51,3 +51,4 @@
 
     <button type="button" onclick="window.history.back();">Back</button>
 @endsection
+@include('layouts.footer')

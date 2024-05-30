@@ -104,5 +104,5 @@
         </div>
     </div>
     <a href="{{ route('books') }}"><button type="button">Back to library</button></a>
-    <script src="{{ asset('js/books.js') }}"></script>
 @endsection
+@include('layouts.footer')

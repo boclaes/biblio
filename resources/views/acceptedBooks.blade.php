@@ -50,3 +50,4 @@
     <a href="{{ route('books') }}" style="display: block; margin-top: 20px;"><button type="button">Back home</button></a>
     <script src="{{ asset('js/sorting.js') }}"></script>
 @endsection
+@include('layouts.footer')

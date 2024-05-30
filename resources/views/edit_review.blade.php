@@ -16,4 +16,5 @@
     <a href="{{ route('details.book', $book->id) }}"><button type="button">Back</button></a>
 </body>
 </html>
+@include('layouts.footer')
 
